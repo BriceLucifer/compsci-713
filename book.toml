@@ -1,0 +1,10 @@
+[book]
+title = "exam-713"
+authors = ["BriceLucifer"]
+language = "en"
+
+[build]
+build-dir = "output"
+
+[output.html]
+mathjax-support = false
