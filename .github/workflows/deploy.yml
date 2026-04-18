@@ -26,12 +26,12 @@ jobs:
           mdbook-version: latest
 
       - name: Build
-        run: mdbook build exam
+        run: mdbook build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: exam/output
+          path: output
 
   deploy:
     needs: build
