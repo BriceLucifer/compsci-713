@@ -50,6 +50,10 @@
 
 - [Exam Writing Training & Timed Drills](./chapters/Z_writing_training.md)
 
+# 📋 Cheatsheet
+
+- [A4 Cheatsheet (Double-Sided)](./chapters/cheatsheet.md)
+
 # 🧪 Mock Exams
 
 - [Mock Exam 1](./chapters/mock_exam_1.md)
