@@ -40,6 +40,10 @@
 
 - [Robot Soccer & Collective Behaviour](./chapters/H_multiagent.md)
 
+# 🟠 Part I — NEAT & Genetic Algorithms
+
+- [NEAT — 遗传算法与神经进化](./chapters/I_neat.md)
+
 # 🌐 English Expression Guide
 
 - [通用句式模板](./chapters/english_expressions.md)
