@@ -36,13 +36,17 @@
 
 - [Fuzzy Logic, Bayesian Reasoning & Vagueness vs Uncertainty](./chapters/G_soft_computing.md)
 
-# 🟠 Part H — Multi-Agent Systems (10%)
+# 🟠 Part H — Embodied AI & Multi-Agent Systems (10%)
 
-- [Robot Soccer & Collective Behaviour](./chapters/H_multiagent.md)
+- [Embodied AI, Teams & Collective Behaviour](./chapters/H_multiagent.md)
+  - [Part 1 — Embodied AI: Polly, BigDog, Mars Rovers](./chapters/H_multiagent.md#feynman-draft--part-1-embodied-ai)
+  - [Part 2 — AI Teams: STEAM, Flocking, Robot Soccer](./chapters/H_multiagent.md#feynman-draft--part-2-ai-teams--swarms)
 
-# 🟠 Part I — NEAT & Genetic Algorithms
+# 🟠 Part I — NEAT & Genetic Algorithms (Soft Computing)
 
-- [NEAT — 遗传算法与神经进化](./chapters/I_neat.md)
+- [GA Fundamentals & NEAT Algorithm](./chapters/I_neat.md)
+  - [GA: Selection, Crossover, Mutation](./chapters/I_neat.md#part-1-遗传算法-ga--像养乌龟一样优化)
+  - [NEAT: Structural Mutation, Innovation Numbers, Speciation](./chapters/I_neat.md#part-4-neat--用-ga-来养出一个神经网络)
 
 # 🌐 English Expression Guide
 
@@ -66,3 +70,5 @@
 - [Mock Exam 2 — Answers](./chapters/mock_exam_2_answers.md)
 - [Mock Exam 3 (Comprehensive)](./chapters/mock_exam_3.md)
 - [Mock Exam 3 — Answers](./chapters/mock_exam_3_answers.md)
+- [Mock Exam 4 (NEAT & Embodied AI)](./chapters/mock_exam_4.md)
+- [Mock Exam 4 — Answers](./chapters/mock_exam_4_answers.md)

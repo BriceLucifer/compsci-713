@@ -1,0 +1,390 @@
+1. Deep Q-Network (DQN)
+1. Deep Q Network (DQN) in Reinforcement Learning
+a. Two Neural Networks in DQN
+(3 marks each, 6 marks total)
+
+Online (Q) Network
+
+Function: Approximates the action-value function 
+𝑄
+(
+𝑠
+,
+𝑎
+;
+𝜙
+)
+Q(s,a;ϕ).
+
+It takes the current state 
+𝑠
+s as input and outputs estimated Q-values for all possible actions.
+
+This network is trained and updated during learning using experience and rewards.
+
+Target Network
+
+Function: Provides a stable target for the Q-value updates.
+
+It has the same architecture as the online network, but its parameters 
+𝜙
+−
+ϕ 
+−
+  are updated less frequently (e.g., copied from the online network every few steps).
+
+This helps to reduce instability and avoid oscillations during training by preventing the target from shifting too quickly.
+
+b. Bootstrapping in Reinforcement Learning
+(6 marks)
+
+Definition:
+Bootstrapping refers to the method of updating estimates based on other estimates rather than waiting for the final outcome.
+
+In Q-learning and DQN:
+The Q-value is updated using the current estimate of future rewards:
+
+𝑄
+(
+𝑠
+,
+𝑎
+)
+←
+𝑄
+(
+𝑠
+,
+𝑎
+)
++
+𝛼
+[
+𝑟
++
+𝛾
+max
+⁡
+𝑎
+′
+𝑄
+(
+𝑠
+′
+,
+𝑎
+′
+)
+−
+𝑄
+(
+𝑠
+,
+𝑎
+)
+]
+Q(s,a)←Q(s,a)+α[r+γ 
+a 
+′
+ 
+max
+​
+ Q(s 
+′
+ ,a 
+′
+ )−Q(s,a)]
+Here, the target 
+𝑟
++
+𝛾
+max
+⁡
+𝑎
+′
+𝑄
+(
+𝑠
+′
+,
+𝑎
+′
+)
+r+γmax 
+a 
+′
+ 
+​
+ Q(s 
+′
+ ,a 
+′
+ ) is not from actual returns but is an estimate — this is bootstrapping.
+
+Advantages over Non-Bootstrapping Methods (e.g., Monte Carlo):
+
+✅ Sample Efficiency: Updates occur after each step, not after full episodes.
+
+✅ Faster Learning: Rewards propagate backward through the value function more quickly.
+
+✅ Lower Variance: Since updates are based on estimates, they are more stable, although potentially biased.
+
+---------------
+Deep Q-Network is a canonical deep reinforcement learning algorithm that combines reinforcement learning and deep neural networks to handle complex decision-making tasks.
+a. Two Neural Networks in DQN
+1) Online (Q-) Network
+Role: Approximates the action-value function 𝑄(𝑠,𝑎;𝜃).
+
+Function: Given a state 𝑠, it outputs a vector of Q-values for all possible actions. During training, its weights 
+θ are updated to minimise the Bellman temporal-difference (TD) error.
+
+2) Target Network
+Role: Provides a stable "ground-truth" for the Q-value targets used by the online network during learning.
+Function: Has the same architecture as the online network, but with parameters 𝜃−that are held fixed for a certain number of training steps. Periodically, these parameters are updated to match the online network:
+𝜃−←𝜃
+By keeping the target network semi-static, it helps prevent feedback loops that can destabilise learning.
+
+b. Bootstrapping in Reinforcement Learning
+Concept:
+Bootstrapping refers to updating an estimate using other current estimates, rather than waiting for final outcomes. In Q-learning (and DQN), the Q-value is updated using:？
+depends on the current estimate of the Q-function, not on the actual return over an entire episode.
+
+Advantages over non-bootstrapping methods (e.g., Monte Carlo):
+Sample efficiency: Learning occurs from every transition immediately, without needing to complete an entire episode.
+Faster reward propagation: Value information spreads back through time step-by-step, allowing quicker learning of long-term outcomes.
+Lower variance: Updates based on current value estimates have lower variance, making the learning process more stable (though possibly more biased).
+
+2. Large language models and self-attention
+a. Three vectors used in self-attention:
+Each input in the transformer encoder is projected into three vectors:
+Query vector (Q)
+Key vector (K)
+Value vector (V)
+
+These vectors are derived by multiplying the input vector with learned weight matrices:
+Q = XWᵩ
+K = XWₖ
+V = XWᵥ
+b. Advantage of self-attention over traditional attention:
+Self-attention allows each word in a sequence to attend to every other word, including itself, simultaneously.
+Compared to traditional attention mechanisms (like in RNN-based models), self-attention has two main advantages:
+Parallelisation: Unlike sequential models (e.g., RNNs), self-attention processes all words at once, improving computational efficiency.
+Global context: It captures long-range dependencies more effectively, as every position can interact with every other position directly, regardless of distance.
+When might a decision tree be preferable to a decision forest?
+
+3. Technical Route for Developing an LLM-based Hydropower Planning Platform
+1. Data Collection and Preprocessing
+Gather Multimodal Data: Collect diverse datasets including:
+Topographical and hydrological data (e.g., river flow, elevation, rainfall).
+Environmental impact reports.
+Infrastructure maps and geographic information system (GIS) data.
+Historical planning documents and regulations.
+Text Processing: Clean and preprocess unstructured textual data (e.g., converting PDFs to structured text, removing noise).
+Data Annotation: Use domain experts to annotate planning-related entities and relationships (e.g., “optimal flow range,” “protected zones”).
+
+2. Model Selection and Pretraining (if applicable)
+Choose Base LLM: Select a suitable large language model architecture (e.g., GPT, LLaMA, or open-source variants) that supports domain adaptation.
+Pretrain (Optional): If starting from scratch, pretrain the model on a large corpus of scientific and geographic text to build foundational knowledge.
+
+3. Domain-Specific Fine-tuning
+Fine-tune on Planning Documents: Use supervised learning or reinforcement learning to fine-tune the model on hydropower-related documents and expert-annotated data.
+Task-Specific Datasets: Include data relevant to tasks like site suitability analysis, regulation interpretation, and cost-benefit trade-offs.
+
+4. Integration with External Tools
+Geospatial Integration: Connect the LLM with GIS APIs and satellite data pipelines for real-time analysis and map-based querying.
+Hybrid System Design: Combine LLM outputs with traditional optimization models (e.g., for flow estimation, risk assessment) to provide grounded recommendations.
+
+5. Platform Development
+User Interface: Develop an interactive dashboard for planners to query the model using natural language (e.g., "Suggest viable sites in Waikato with minimal ecological impact").
+Explainability Module: Add tools to show reasoning or evidence behind each recommendation (e.g., citing documents or datasets).
+
+6. Evaluation and Feedback Loop
+Model Evaluation: Assess performance using task-specific metrics (e.g., precision of site suggestions, compliance with environmental rules).
+Human-in-the-Loop Refinement: Collect expert feedback to iteratively improve the model through continued fine-tuning.
+
+4. A single decision tree may be a better choice than a decision forest (e.g., a random forest) in situations where:
+1. Interpretability and Transparency Are Required
+Context:
+In fields like healthcare, law, or finance, decisions must be easily explainable to users, regulators, or stakeholders.
+
+Why a tree is better:
+A single decision tree provides a clear and visual path for how decisions are made — step-by-step — making it easy to understand and trust.
+
+Contrast:
+A decision forest is an ensemble of many trees and behaves like a "black box," making it difficult to explain individual predictions.
+
+2. Low Resource Environments or Need for Fast Predictions
+Context:
+In real-time systems, mobile apps, or embedded devices where computational resources are limited (e.g., limited memory, processing speed).
+
+Why a tree is better:
+A single decision tree is lightweight, fast to evaluate, and requires minimal storage.
+
+Contrast:
+A decision forest has many trees that need to be evaluated, which consumes more memory and slows down prediction time.
+
+✅ Summary
+Aspect	Decision Tree Advantage
+Interpretability	Easy to understand and explain decisions
+Efficiency	Fast prediction with low computational cost
+In short: A decision tree is preferable when explainability and efficiency are more important than maximizing predictive accuracy.
+
+5. Naïve Bayes (NB) Classifier and Its Assumptions
+a. Two Simplifying Assumptions in Naïve Bayes
+Conditional Independence Assumption
+Explanation: Naïve Bayes assumes that given the class label (e.g., "spam" or "not spam"), the features (e.g., words in a message) are conditionally independent of each other.
+Example: If the class is "spam", the presence of the word "free" is treated as independent from the word "money", even though in reality they may co-occur often in spam messages.
+Feature Relevance Assumption
+Explanation: It assumes that all features contribute independently and equally to the final classification. That is, no feature is irrelevant, and no interaction between features is required for decision-making.
+Example: Every word contributes its own probability score to whether a message is spam, regardless of context or word order.
+
+b. Without These Assumptions, What Additional Information Is Needed?
+Without the simplifying assumptions, we would need to estimate the joint probability distribution of all features conditioned on the class. Specifically, we must learn:
+All conditional dependencies between features:
+Instead of computing 𝑃(𝑥1,𝑥2，... 𝑥𝑛∣𝑦) as a product of individual terms, we would need to compute the full joint probability:?
+which grows exponentially with the number of features (e.g., all word combinations in messages).
+
+Covariance or correlation structure between features:
+This would require a much larger training dataset and more complex models (e.g., Bayesian networks or graphical models) to capture how features (like words) influence each other within the same class.
+In short, the model would need to explicitly learn the dependencies among features, significantly increasing computational and data requirements.
+
+6. NEAT (NeuroEvolution of Augmenting Topologies) Algorithm
+a. Application of NEAT in a Mobile Robot
+Example Application: Autonomous navigation in a dynamic environment
+
+NEAT can evolve both the topology and weights of a neural network that controls a mobile robot’s behavior, such as obstacle avoidance and path planning.
+
+The robot is equipped with sensors (e.g., LIDAR, ultrasonic, infrared) to detect distances to nearby objects.
+
+These sensor readings form the input to the neural network, which outputs motor control signals (e.g., move forward, turn left/right).
+
+Using NEAT, multiple generations of neural networks are evolved based on their fitness — e.g., how far the robot travels without hitting obstacles or how efficiently it reaches a target.
+
+Over time, NEAT selects the best-performing networks and gradually evolves more effective topologies that adapt to environmental complexity, even adding hidden layers or connections as needed.
+
+b. A Time-Consuming Aspect of Training or Tuning NEAT
+Challenge: Designing and tuning the fitness function
+
+The fitness function is critical in evolutionary algorithms like NEAT, as it guides the selection of "better" networks.
+
+For a mobile robot, designing a fitness function that balances multiple competing objectives—such as avoiding collisions, minimizing travel time, and following legal or safe paths—can be very time-consuming.
+
+If the fitness function is poorly designed, the algorithm might converge on suboptimal or undesired behaviors (e.g., the robot learns to spin in place to avoid collisions instead of navigating).
+
+Iteratively adjusting the fitness function, running simulation tests, and ensuring that it aligns with real-world performance requires significant domain knowledge, experimentation, and debugging time.
+
+7. Self-Supervised Learning (SSL)
+a. Pretext and Downstream Tasks in SSL
+Self-supervised learning trains models using automatically generated labels from the input data itself, allowing the model to learn useful representations without requiring human-annotated labels.
+Pretext Task:
+A task designed to teach the model to understand patterns or structure in the data without needing manually labelled ground truth.
+
+The goal is not the task itself, but to learn meaningful representations.
+Examples:
+In NLP: Predicting the next word (e.g., in GPT), or masked words (e.g., BERT).
+
+In computer vision: Predicting the rotation of an image, or reconstructing missing patches.
+
+Downstream Task:
+A real-world task (like classification, regression, or segmentation) that uses the representations learned during the pretext task.
+After pretraining on the pretext task, the model is fine-tuned (or evaluated) on the downstream task using a small labelled dataset.
+
+Examples:
+Sentiment classification in text.
+Image classification using features learned via self-supervised contrastive learning.
+
+b. Comparison with Other Paradigms
+i. Self-Supervised Learning vs. Supervised Learning
+
+Aspect	                       Self-Supervised Learning	                              Supervised Learning
+Label Type	       Uses labels generated from the input data itself	        Requires manually annotated labels
+Data Efficiency	       More data-efficient (can use large unlabelled datasets)	Needs large labelled datasets
+Training Objective      Learns representations via pretext tasks	                Directly optimizes for the task label
+Usage	Pretraining for general features	Direct task-specific training
+Key Difference: Supervised learning relies on external supervision, whereas self-supervised learning creates supervision internally using pretext tasks.
+
+ii. Self-Supervised Learning vs. Unsupervised Learning
+Aspect	                      Self-Supervised Learning	                  Unsupervised Learning
+Learning Goal	         Learn useful features via proxy tasks         	Discover structure or patterns (e.g., clusters)
+Label Involvement 	 Uses pseudo-labels from data              	No labels or proxy tasks involved
+Examples	BERT, SimCLR, MoCo	K-Means, PCA, Autoencoders (unsupervised)
+Output Use	Often followed by fine-tuning for downstream tasks	Mostly used for data exploration or preprocessing
+
+Key Difference: While both don't use human labels, SSL involves a specific predictive task, making it more goal-directed than unsupervised learning, which is often exploratory.
+
+8. Replay Techniques in Continual Learning and the Stability-Plasticity Trade-off
+Continual learning aims to enable models to learn from a stream of tasks or data over time without suffering from catastrophic forgetting—the tendency for a model to forget previously learned information when trained on new data.
+Role of Replay Techniques
+Replay techniques are among the most widely used strategies to combat catastrophic forgetting. They involve reintroducing past data (or approximations of it) during training on new tasks.
+
+Two main types:
+Experience Replay (Rehearsal):
+Stores a subset of past training data in a memory buffer.
+During new task training, samples from the buffer are interleaved with current task data.
+Helps the model revisit old knowledge, maintaining performance on previous tasks.
+
+Generative Replay:
+Instead of storing actual data, a generative model (e.g., GAN or VAE) is trained to synthesize past data.
+This avoids storage concerns and privacy issues but introduces challenges in generation quality.
+Effect: Replay helps anchor the model’s knowledge, reducing the chance of overwriting past parameters during new learning phases.
+
+Stability-Plasticity Trade-off
+Replay techniques help balance the trade-off between:
+
+Stability: The model's ability to retain previous knowledge.
+
+Plasticity: The model's ability to adapt to new knowledge.
+
+Replay’s Role:
+
+By revisiting past experiences during training, replay promotes stability, ensuring the model doesn't forget.
+
+However, if too much emphasis is placed on old data (e.g., over-replay), it may reduce plasticity, making it harder for the model to learn new tasks effectively.
+
+Conclusion:
+Replay techniques moderate the stability-plasticity trade-off, allowing the model to incrementally learn while preserving prior task performance. Tuning the replay ratio, buffer size, and sampling strategy is key to maintaining this balance.
+
+9. AI Algorithm in Self-Driving Cars: Convolutional Neural Networks (CNNs)
+Algorithm: Convolutional Neural Networks (CNNs)
+CNNs are a type of deep learning algorithm particularly well-suited for processing visual data, such as camera images from self-driving cars.
+
+Role in Autonomous Driving
+CNNs are extensively used in the perception system of self-driving cars to interpret and understand the surrounding environment. Their main contributions include:
+
+Object Detection:
+
+CNN-based models (e.g., YOLO, Faster R-CNN) detect and classify objects such as vehicles, pedestrians, traffic lights, and road signs in real time.
+
+This enables the car to recognize obstacles and make safe navigation decisions.
+
+Lane Detection:
+
+CNNs can identify lane markings on the road, even under challenging conditions like poor lighting or occlusions.
+
+This information is crucial for lane keeping and path planning.
+
+Semantic Segmentation:
+
+CNNs classify each pixel in an image into categories (e.g., road, sidewalk, vegetation), providing a detailed map of the driving environment.
+
+This supports scene understanding and decision making.
+
+Impact on Autonomous Driving
+CNNs allow self-driving cars to:
+
+Perceive the world with high accuracy and speed,
+
+React to dynamic changes in traffic,
+
+Maintain safety through object recognition and obstacle avoidance,
+
+Enable advanced features like automated lane changing and parking.
+
+Conclusion:
+CNNs are foundational to how self-driving cars "see" the world. By extracting high-level features from raw sensor data, they empower the vehicle to understand and navigate complex real-world environments safely.
+
+
+
+
+
+
