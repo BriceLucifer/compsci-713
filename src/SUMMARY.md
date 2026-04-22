@@ -39,14 +39,14 @@
 # 🟠 Part H — Embodied AI & Multi-Agent Systems (10%)
 
 - [Embodied AI, Teams & Collective Behaviour](./chapters/H_multiagent.md)
-  - [Part 1 — Embodied AI: Polly, BigDog, Mars Rovers](./chapters/H_multiagent.md#feynman-draft--part-1-embodied-ai)
+  - [Part 1 — Embodied AI: Polly, Allen, BigDog, Mars Rovers](./chapters/H_multiagent.md#feynman-draft--part-1-embodied-ai)
   - [Part 2 — AI Teams: STEAM, Flocking, Robot Soccer](./chapters/H_multiagent.md#feynman-draft--part-2-ai-teams--swarms)
 
 # 🟠 Part I — NEAT & Genetic Algorithms (Soft Computing)
 
 - [GA Fundamentals & NEAT Algorithm](./chapters/I_neat.md)
-  - [GA: Selection, Crossover, Mutation](./chapters/I_neat.md#part-1-遗传算法-ga--像养乌龟一样优化)
-  - [NEAT: Structural Mutation, Innovation Numbers, Speciation](./chapters/I_neat.md#part-4-neat--用-ga-来养出一个神经网络)
+  - [GA: Selection, Crossover, Mutation](./chapters/I_neat.md#part-1-genetic-algorithms--like-breeding-racing-turtles)
+  - [NEAT: Structural Mutation, Innovation Numbers, Speciation](./chapters/I_neat.md#part-7-neat--evolving-neural-networks)
 
 # 🌐 English Expression Guide
 
@@ -72,3 +72,5 @@
 - [Mock Exam 3 — Answers](./chapters/mock_exam_3_answers.md)
 - [Mock Exam 4 (NEAT & Embodied AI)](./chapters/mock_exam_4.md)
 - [Mock Exam 4 — Answers](./chapters/mock_exam_4_answers.md)
+- [Mock Exam 5 (Comprehensive Review)](./chapters/mock_exam_5.md)
+- [Mock Exam 5 — Answers](./chapters/mock_exam_5_answers.md)

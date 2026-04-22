@@ -1,9 +1,9 @@
 # Decision Trees & Ensemble Methods (Week 4 Lecture 2)
 
 ## 🎯 Exam Importance
-🔴 **必考** | Sample Test Q5, **3 marks = 15% of total**
+🔴 **必考** | Sample Test Q5 (3 marks), Actual S1 2025 Q4 (2 marks), S1 2026 Sample Q5 (3 marks)
 
-Random Forest feature bagging is **directly tested** in Q5. Entropy, Information Gain, and the Bagging vs Boosting distinction are foundational concepts that appear across multiple question types. You must be able to calculate entropy, explain why feature bagging decorrelates trees, and trace through an AdaBoost round with numbers.
+Random Forest feature bagging is **directly tested** in Q5. CART's greedy nature is tested in Q4. Entropy, Information Gain, and the Bagging vs Boosting distinction are foundational concepts that appear across multiple question types. You must be able to calculate entropy, explain why feature bagging decorrelates trees, explain what "greedy" means for CART, and trace through an AdaBoost round with numbers.
 
 ---
 
@@ -12,29 +12,39 @@ Random Forest feature bagging is **directly tested** in Q5. Entropy, Information
 | English Term | 中文 | One-line Definition |
 |---|---|---|
 | Decision Tree（决策树） | 决策树 | A tree-structured classifier: internal nodes test features, branches represent values, leaves assign class labels |
-| CART（分类回归树） | 分类回归树 | Classification And Regression Trees — always performs **binary** splits, uses Gini impurity |
-| Entropy $H(X)$（熵） | 熵 | $H(X) = -\sum p(x) \log_2 p(x)$ — measures impurity/uncertainty in a distribution |
-| Conditional Entropy $H(Y\|X)$（条件熵） | 条件熵 | $H(Y\|X) = \sum P(X=x)\,H(Y\|X=x)$ — remaining uncertainty about $Y$ after knowing $X$ |
-| Information Gain（信息增益） | 信息增益 | $IG(Y\|X) = H(Y) - H(Y\|X)$ — how much knowing $X$ reduces uncertainty about $Y$ |
-| Gini Impurity（基尼不纯度） | 基尼不纯度 | $\text{Gini}(t) = 1 - \sum p_i^2$ — alternative splitting criterion used in CART |
-| Pruning（剪枝） | 剪枝 | Removing subtrees/leaf nodes to reduce overfitting |
+| Root Node（根节点） | 根节点 | The topmost node that represents the first split on the entire dataset |
+| Internal / Decision Node（内部节点） | 内部节点 / 决策节点 | A non-leaf node that tests a feature and branches based on the result |
+| Leaf Node（叶节点） | 叶节点 | A terminal node that assigns a class label (classification) or value (regression) |
+| Classification Tree（分类树） | 分类树 | Discrete output; leaf assigns **majority class** of the samples reaching it |
+| Regression Tree（回归树） | 回归树 | Continuous output; leaf assigns **mean value** of the samples reaching it |
+| CART（分类回归树） | 分类回归树 | Classification And Regression Trees -- always performs **binary** splits, uses Gini impurity |
+| ID3 | ID3 算法 | Iterative Dichotomiser 3 -- multiway splits, categorical features only, uses Information Gain |
+| C4.5 | C4.5 算法 | Extension of ID3 -- handles continuous features, converts tree to rules, performs pruning |
+| Entropy $H(X)$（熵） | 熵 | $H(X) = -\sum p(x) \log_2 p(x)$ -- measures impurity/uncertainty in a distribution |
+| Joint Entropy $H(X,Y)$（联合熵） | 联合熵 | Uncertainty when considering two variables jointly |
+| Specific Conditional Entropy $H(Y\|X=x)$ | 特定条件熵 | $H(Y\|X=x) = -\sum p(y\|x) \log_2 p(y\|x)$ -- uncertainty about $Y$ given a specific value of $X$ |
+| Conditional Entropy $H(Y\|X)$（条件熵） | 条件熵 | $H(Y\|X) = \sum P(X=x)\,H(Y\|X=x)$ -- remaining uncertainty about $Y$ after knowing $X$ |
+| Information Gain（信息增益） | 信息增益 | $IG(Y\|X) = H(Y) - H(Y\|X)$ -- how much knowing $X$ reduces uncertainty about $Y$ |
+| Gini Impurity（基尼不纯度） | 基尼不纯度 | $\text{Gini}(t) = 1 - \sum p_i^2$ -- alternative splitting criterion used in CART |
+| Pruning（剪枝） | 剪枝 | Removing subtrees/leaf nodes to reduce overfitting; evaluate effect of deleting leaf nodes |
 | Ensemble Method（集成方法） | 集成学习 | Combining multiple weak learners into one strong learner |
-| Bagging（自助聚合） | 袋装法 / 自助聚合 | Bootstrap Aggregating — train models independently on bootstrap samples, aggregate by vote/average |
+| Bagging（自助聚合） | 袋装法 / 自助聚合 | Bootstrap Aggregating -- train models independently on bootstrap samples, aggregate by vote/average |
 | Bootstrap Sample（自助样本） | 自助样本 | A sample of size $n$ drawn **with replacement** from a dataset of size $n$ |
 | Random Forest（随机森林） | 随机森林 | Bagging + feature bagging: at each split, only $\sqrt{p}$ random features are considered |
 | Feature Bagging（特征袋装） | 特征袋装 | Randomly selecting a subset of features at each split to decorrelate trees |
 | Boosting（提升法） | 提升法 | Sequential training where each new model focuses on errors of previous ones |
-| AdaBoost（自适应提升） | 自适应提升 | Adaptive Boosting — re-weights misclassified samples each round, combines weighted weak learners |
+| AdaBoost（自适应提升） | 自适应提升 | Adaptive Boosting -- re-weights misclassified samples each round, combines weighted weak learners |
 | Gradient Boosting（梯度提升） | 梯度提升 | Each new tree fits the residual errors (negative gradients) of the current ensemble |
 | XGBoost（极端梯度提升） | 极端梯度提升 | Optimised gradient boosting with regularisation in the objective |
 | Weak Learner（弱学习器） | 弱学习器 | A classifier only slightly better than random chance (e.g., a decision stump) |
 | Decision Stump（决策桩） | 决策桩 | A decision tree with exactly one split (depth 1) |
 | Bias（偏差） | 偏差 | Systematic error from a model too simple to capture the true relationship |
-| Variance（方差） | 方差 | Sensitivity to training data — how much the model changes with different samples |
+| Variance（方差） | 方差 | Sensitivity to training data -- how much the model changes with different samples |
+| NP-complete（NP 完全） | NP 完全问题 | Finding the optimal decision tree is computationally intractable; hence we use greedy heuristics |
 
 ---
 
-## 🧠 Feynman Draft — Learning From Scratch
+## 🧠 Feynman Draft -- Learning From Scratch
 
 ### The 20 Questions Game
 
@@ -42,17 +52,39 @@ Imagine you are playing the game "20 Questions（20个问题游戏）." Someone 
 
 That is exactly how a **decision tree** works. Each internal node asks a question about one feature (e.g., "Is income > $50K?"). Each branch is the answer (yes/no). Each leaf is the final prediction (e.g., "will repay loan" or "will default").
 
+### Trees are Surprisingly Powerful
+
+A decision tree can express **any Boolean function**. Think about it: for any truth table, you can build a tree that tests each input variable along a path from root to leaf. The tree might be huge, but it can always represent the function.
+
+A decision tree can also **approximate any continuous function** (given enough depth and data).
+
+Even better: every path from root to leaf maps directly to an IF-THEN rule:
+
+```
+Path: [root] Outlook=Sunny → [node] Humidity=High → [leaf] Don't Play
+
+Rule: IF Outlook = Sunny AND Humidity = High THEN Don't Play Tennis
+```
+
+So a decision tree is essentially a **set of rules** -- just organized as a tree for efficient evaluation.
+
 ### What Makes a Good Question?
 
-Not all questions are equally useful. Asking "Is it alive?" when you already know it is an animal is worthless — it does not split anything. The best question is one that reduces your **uncertainty** the most.
+Not all questions are equally useful. Asking "Is it alive?" when you already know it is an animal is worthless -- it does not split anything. The best question is one that reduces your **uncertainty** the most.
 
 **Entropy** measures this uncertainty. Think of it as "how surprised are you, on average, by the outcome?"
 
-- **Fair coin flip**: You have no idea what is coming — maximum surprise. $H = 1$ bit.
-- **Biased coin (90% heads)**: You mostly expect heads — less surprise. $H \approx 0.47$ bits.
+- **Fair coin flip**: You have no idea what is coming -- maximum surprise. $H = 1$ bit.
+- **Biased coin (90% heads)**: You mostly expect heads -- less surprise. $H \approx 0.47$ bits.
 - **Certain outcome (100% heads)**: No surprise at all. $H = 0$ bits.
 
-**Information Gain** tells you how much a particular question reduces entropy. You always pick the question with the highest Information Gain — the one that tells you the most.
+**Information Gain** tells you how much a particular question reduces entropy. You always pick the question with the highest Information Gain -- the one that tells you the most.
+
+### But Finding the Best Tree is Impossible...
+
+Here's the catch: finding the **optimal** decision tree (the smallest tree that correctly classifies all training data) is an **NP-complete problem**. That means there's no known algorithm that can solve it efficiently for large datasets.
+
+So what do we do? We use a **greedy heuristic**: at each node, pick the best split **right now** without worrying about future splits. This is fast but not guaranteed to find the global optimum.
 
 ### Toy Entropy Calculation
 
@@ -72,31 +104,41 @@ $$H(Y|X) = \frac{5}{10} \times 0 + \frac{5}{10} \times 0.722 = 0.361 \text{ bits
 
 Information Gain: $IG = 0.971 - 0.361 = 0.610$ bits. This is a great split!
 
-### From One Tree to a Forest — Wisdom of Crowds
+### From One Tree to a Forest -- Wisdom of Crowds
 
-A single decision tree is like asking one person for their opinion. That person might be knowledgeable but also biased — they might latch onto irrelevant quirks of their own experience. This is **overfitting**: the tree memorises the training data (high variance).
+A single decision tree is like asking one person for their opinion. That person might be knowledgeable but also biased -- they might latch onto irrelevant quirks of their own experience. This is **overfitting**: the tree memorises the training data (high variance).
 
 Now imagine asking 2,048 different people, each of whom:
 1. Studied a slightly different version of the material (different **bootstrap samples** of data)
 2. Focused on different aspects (different **random subsets of features**)
 
-Then you take a majority vote. Individual errors cancel out. This is **Random Forest（随机森林）** — the "wisdom of crowds" for machine learning.
+Then you take a majority vote. Individual errors cancel out. This is **Random Forest（随机森林）** -- the "wisdom of crowds" for machine learning.
 
-### Bagging vs Boosting — Two Strategies for Teamwork
+### Why Feature Bagging is Essential (Not Just Data Bagging!)
 
-![Bagging vs Boosting — parallel vs sequential flow](./figures/07_bagging_boosting.png)
+Here's a subtle but critical point. Even with bagging (training on different bootstrap samples), if one feature is overwhelmingly strong (say, "blood sugar level" for predicting diabetes), **every tree will put that feature at the root**. The trees become nearly identical despite seeing different data subsets. Averaging 2,048 identical trees is no better than having one tree.
+
+**Feature bagging** solves this: at each split, only $\sqrt{p}$ randomly chosen features are considered. Most trees won't even have the dominant feature available at their root. This forces diversity -- trees explore different parts of the feature space and make different kinds of errors, which average out beautifully.
+
+### Bagging vs Boosting -- Two Strategies for Teamwork
+
+![Bagging vs Boosting -- parallel vs sequential flow](./figures/07_bagging_boosting.png)
 
 **Bagging（袋装法）** = "parallel teamwork." Everyone works independently on their own slightly different version of the problem. Then you average. Good when each individual is smart but unreliable (high variance).
 
 **Boosting（提升法）** = "sequential coaching." The first person tries, the second person specifically studies the first person's mistakes, the third person studies mistakes that remain, and so on. Good when each individual is weak/simple (high bias).
 
-⚠️ **Common Misconception**: Many students confuse **feature bagging** with **data bagging (bootstrapping)**. They are two separate things that happen together in Random Forest:
+⚠️ **Common Misconception 1**: Many students confuse **feature bagging** with **data bagging (bootstrapping)**. They are two separate things that happen together in Random Forest:
 - **Data bagging** = each tree trains on a different bootstrap sample of the data (sample with replacement)
 - **Feature bagging** = at each split, each tree only considers $\sqrt{p}$ randomly chosen features
 
 Both are needed. Data bagging alone is just "Bagging." Adding feature bagging on top makes it "Random Forest."
 
-💡 **Core Intuition**: Many diverse, slightly-wrong trees vote together to produce one highly accurate prediction — strength through diversity.
+⚠️ **Common Misconception 2**: Students think "greedy" means "fast" or "lazy." In decision trees, **greedy means the algorithm selects the best split at each node without looking ahead** to see how that split affects future nodes. It makes the locally optimal choice, which may not be globally optimal.
+
+⚠️ **Common Misconception 3**: "Bagging reduces bias" -- NO! Bagging reduces **variance**. Boosting reduces **bias**.
+
+💡 **Core Intuition**: Many diverse, slightly-wrong trees vote together to produce one highly accurate prediction -- strength through diversity.
 
 ---
 
@@ -115,22 +157,44 @@ Key properties:
 - $H(X) = 0$ iff one outcome has probability 1 (complete certainty)
 - For binary classification: $H_{\max} = 1$ bit (when $p = 0.5$)
 - More classes → higher potential entropy: $H_{\max} = \log_2 k$ for $k$ classes
+- **Maximum when uniform**: for binary case, $p = 0.5$ gives $H = 1$ bit
 
 **Canonical examples:**
 - Fair coin: $H = -0.5\log_2(0.5) - 0.5\log_2(0.5) = 0.5 + 0.5 = 1$ bit
 - Biased coin ($p=0.9$): $H = -0.9\log_2(0.9) - 0.1\log_2(0.1) = 0.137 + 0.332 = 0.469$ bits
 
+### Joint Entropy（联合熵）
+
+The uncertainty when considering two random variables together:
+
+$$H(X, Y) = -\sum_{x \in \mathcal{X}} \sum_{y \in \mathcal{Y}} p(x, y) \log_2 p(x, y)$$
+
+### Specific Conditional Entropy（特定条件熵）
+
+The entropy of $Y$ given a **specific** value of $X$:
+
+$$H(Y | X = x) = -\sum_{y \in \mathcal{Y}} p(y | x) \log_2 p(y | x)$$
+
+This measures: "How uncertain am I about $Y$ when I know $X$ takes value $x$?"
+
 ### Conditional Entropy（条件熵）
 
-The remaining uncertainty about $Y$ after observing $X$:
+The **expected** remaining uncertainty about $Y$ after observing $X$:
 
 $$H(Y | X) = \sum_{x \in \mathcal{X}} P(X = x)\, H(Y | X = x)$$
+
+This is a **weighted average** of the specific conditional entropies, weighted by the probability of each value of $X$.
 
 Expanded form:
 
 $$H(Y | X) = -\sum_{x \in \mathcal{X}} \sum_{y \in \mathcal{Y}} p(x, y) \log_2 p(y | x)$$
 
-This is a **weighted average** of the entropy in each subset created by splitting on $X$.
+### Entropy Properties (Exam-Critical)
+
+1. **Non-negativity**: $H(X) \geq 0$
+2. **Chain Rule**: $H(X, Y) = H(X | Y) + H(Y) = H(Y | X) + H(X)$
+3. **Independence**: If $X$ and $Y$ are independent, $H(Y | X) = H(Y)$ (knowing $X$ tells you nothing about $Y$)
+4. **Conditioning reduces entropy**: $H(Y | X) \leq H(Y)$ (knowing something never increases uncertainty)
 
 ### Information Gain（信息增益）
 
@@ -142,7 +206,7 @@ $$IG(Y | X) = H(Y) - H(Y | X)$$
 
 **Decision tree splitting rule**: At each node, choose the feature $X^*$ that maximises $IG(Y | X^*)$.
 
-### Gini Impurity（基尼不纯度）— Used in CART
+### Gini Impurity（基尼不纯度）-- Used in CART
 
 $$\text{Gini}(t) = 1 - \sum_{i=1}^{k} p_i^2$$
 
@@ -156,9 +220,63 @@ $$\text{Gini}_{\text{split}}(D, A) = \frac{n_1}{n}\,\text{Gini}(D_1) + \frac{n_2
 
 **Gini Reduction** = $\text{Gini}(\text{parent}) - \text{Gini}_{\text{split}}$
 
-CART chooses the split that **maximises Gini Reduction**.
+CART chooses the split that **maximises Gini Reduction** (equivalently, **minimises weighted Gini after split**).
 
 **Comparison**: Entropy and Gini give very similar splits in practice. Gini is slightly faster to compute (no logarithm). ID3/C4.5 use entropy; CART uses Gini.
+
+### ID3 vs C4.5 vs CART (Classical Algorithms)
+
+| Feature | ID3 | C4.5 | CART |
+|---|---|---|---|
+| **Split type** | Multiway (one branch per value) | Multiway | **Binary only** |
+| **Feature types** | Categorical only | Categorical + Continuous | Categorical + Continuous |
+| **Splitting criterion** | Information Gain | Gain Ratio (normalised IG) | **Gini Impurity** (classification) / MSE (regression) |
+| **Pruning** | No | Yes (converts tree to rules, prunes) | Yes (evaluates effect of deleting leaves) |
+| **Missing values** | No handling | Handles missing values | Handles missing values |
+| **Output** | Classification only | Classification (can convert to rules) | Classification AND Regression |
+
+### CART is GREEDY (Exam-Critical!)
+
+**CART selects the best split at each node WITHOUT looking ahead.** It makes no effort to craft an optimal tree overall -- it just makes the maximally good local decision at each step.
+
+Why does this matter?
+- The problem of finding the globally optimal tree is **NP-complete**
+- Greedy does NOT guarantee the global optimum
+- A suboptimal early split might lead to a much worse tree overall
+- But greedy is fast and works well enough in practice
+
+This is directly tested: **S1 2025 Actual Q4 (2 marks)** asks what "greedy" means for CART.
+
+### Decision Tree Problems
+
+1. **Overfitting**: Deep trees memorise training noise
+2. **Exponentially less data at lower levels**: Each split halves (roughly) the data; by level 10, leaves may have very few samples
+3. **Greedy ≠ global optimum**: As explained above
+4. **Solution**: Pruning -- evaluate the effect of deleting leaf nodes, yields simpler trees, reduces overfitting
+
+### Expressiveness of Decision Trees
+
+- Can express **any Boolean function** (build a tree for any truth table)
+- Can **approximate any continuous function** (with sufficient depth)
+- Every path from root to leaf = one IF-THEN rule
+- A decision tree is equivalent to a **disjunction of conjunctions** (OR of ANDs)
+
+```
+Tree:
+        [Outlook]
+       /    |    \
+   Sunny Overcast  Rain
+     |      |       |
+  [Humid] Play   [Wind]
+   / \            / \
+ No  Yes       No  Yes
+
+Rules:
+  IF Outlook=Overcast THEN Play
+  IF Outlook=Sunny AND Humidity=Normal THEN Play
+  IF Outlook=Rain AND Wind=Weak THEN Play
+  (otherwise: Don't Play)
+```
 
 ### AdaBoost Algorithm（自适应提升算法）
 
@@ -194,11 +312,11 @@ Where $\Omega(f_t) = \gamma T_{\text{leaves}} + \frac{1}{2}\lambda \|w\|^2$ pena
 
 ---
 
-## 🔄 How It Works — Step by Step
+## 🔄 How It Works -- Step by Step
 
-### 1. Building a Decision Tree
+### 1. Building a Decision Tree (Greedy, Top-Down)
 
-**Algorithm (greedy, top-down):**
+**Algorithm:**
 
 ```
 function BuildTree(data D, features F):
@@ -207,7 +325,7 @@ function BuildTree(data D, features F):
     if F is empty or stopping criterion met:
         return LeafNode(majority label in D)
     
-    best_feature = argmax_{X in F} IG(Y | X)
+    best_feature = argmax_{X in F} IG(Y | X)   // or min Gini
     node = InternalNode(best_feature)
     
     for each value v of best_feature:
@@ -217,9 +335,9 @@ function BuildTree(data D, features F):
     return node
 ```
 
-**Important**: This is a **greedy** algorithm. It picks the locally best split at each step. It does NOT guarantee the globally optimal tree — the problem of finding the optimal tree is NP-hard.
+**Important**: This is a **greedy** algorithm. It picks the locally best split at each step. It does NOT look ahead to see how the current split affects future splits. It does NOT guarantee the globally optimal tree -- the problem of finding the optimal tree is **NP-hard**.
 
-### 2. Entropy Calculation — Worked Example
+### 2. Entropy Calculation -- Worked Example
 
 **Lecture example: Coin flip entropy**
 
@@ -233,9 +351,9 @@ $$= 0.137 + 0.332 = 0.469 \text{ bits}$$
 
 Notice: the more "certain" the outcome, the lower the entropy. A fair coin (maximum uncertainty) has maximum entropy of 1 bit.
 
-### 3. Information Gain — Worked Example
+### 3. Information Gain -- Worked Example
 
-Dataset: 14 samples for "Play Tennis?" — 9 Yes, 5 No.
+Dataset: 14 samples for "Play Tennis?" -- 9 Yes, 5 No.
 
 $$H(Y) = -\frac{9}{14}\log_2\frac{9}{14} - \frac{5}{14}\log_2\frac{5}{14} = 0.940 \text{ bits}$$
 
@@ -253,7 +371,21 @@ $$IG(Y|\text{Outlook}) = 0.940 - 0.694 = 0.246 \text{ bits}$$
 
 Compare with other features. If "Outlook" gives the highest $IG$, it becomes the root split.
 
-### 4. AdaBoost — 3-Round Worked Example (from Lecture)
+### 4. Gini Impurity -- Worked Example
+
+Same dataset: 9 Yes, 5 No out of 14.
+
+$$\text{Gini}(\text{parent}) = 1 - \left(\frac{9}{14}\right)^2 - \left(\frac{5}{14}\right)^2 = 1 - 0.413 - 0.128 = 0.459$$
+
+Split on "Outlook=Sunny" (binary: Sunny vs Not-Sunny):
+- Sunny: 5 samples (2 Yes, 3 No) → $\text{Gini} = 1 - (2/5)^2 - (3/5)^2 = 1 - 0.16 - 0.36 = 0.48$
+- Not-Sunny: 9 samples (7 Yes, 2 No) → $\text{Gini} = 1 - (7/9)^2 - (2/9)^2 = 1 - 0.605 - 0.049 = 0.346$
+
+$$\text{Gini}_{\text{split}} = \frac{5}{14}(0.48) + \frac{9}{14}(0.346) = 0.171 + 0.222 = 0.393$$
+
+$$\text{Gini Reduction} = 0.459 - 0.393 = 0.066$$
+
+### 5. AdaBoost -- 3-Round Worked Example (from Lecture)
 
 **Setup**: 10 samples, equal initial weights $w_i = 0.1$.
 
@@ -281,7 +413,7 @@ $$H(x) = \text{sign}(0.424 \cdot h_1(x) + 0.653 \cdot h_2(x) + 0.916 \cdot h_3(x
 
 **Pattern to notice:** As rounds progress, $\varepsilon_t$ decreases (learners get better at the remaining hard cases) and $\alpha_t$ increases (better learners get more vote weight).
 
-### 5. Random Forest Construction
+### 6. Random Forest Construction
 
 ```
 function RandomForest(data D, num_trees M, num_features_per_split k):
@@ -353,17 +485,21 @@ function Predict(forest, x):
 
 ## 🏗️ Design Question Framework
 
-### If asked: "Explain how Random Forest works and why feature bagging helps."
+### If asked: "What does greedy mean for CART?" (S1 2025 Actual Q4, 2 marks)
+
+**Answer**: "CART is greedy because it **selects the best split at each node without looking ahead** to see how the split affects future decisions. It makes **no effort to craft an optimal tree overall** -- it just makes the maximally good **local** decision at each step. Since finding the globally optimal decision tree is NP-complete, this greedy approach is a practical necessity. The trade-off is that a locally optimal split at one node might lead to a suboptimal tree structure overall."
+
+### If asked: "Explain how Random Forest works and why feature bagging helps." (S1 2025 Sample Q5 / S1 2026 Sample Q5, 3 marks)
 
 **WHAT**: "Random Forest is an ensemble method that combines Bagging with Feature Bagging. It creates many decision trees, each trained on a different bootstrap sample of the data. At each split within each tree, only a random subset of $\sqrt{p}$ features is considered."
 
-**WHY**: "A single decision tree is prone to overfitting (high variance). By training many trees on different data subsets and averaging their predictions, we reduce variance. Feature bagging further decorrelates the trees — without it, every tree would select the same dominant feature at the root, making all trees nearly identical and defeating the purpose of ensemble averaging."
+**WHY**: "A single decision tree is prone to overfitting (high variance). By training many trees on different data subsets and averaging their predictions, we reduce variance. Feature bagging further decorrelates the trees -- without it, every tree would select the same dominant feature at the root, making all trees nearly identical and defeating the purpose of ensemble averaging."
 
 **HOW**: "1) Sample $n$ points with replacement from the training data to create a bootstrap sample. 2) Build a decision tree on this sample, but at each node only evaluate $\sqrt{p}$ randomly chosen features and pick the best among those. 3) Repeat for $M$ trees (e.g., 2,048). 4) For a new input, collect predictions from all trees and take the majority vote."
 
-**TRADE-OFF**: "Each individual tree in a Random Forest is slightly less accurate than a single optimised tree (because it does not see all features at every split). However, the diversity gained makes the ensemble as a whole far more accurate and robust. The trade-off is interpretability — a single tree can be visualised and understood, but a forest of 2,048 trees cannot."
+**TRADE-OFF**: "Each individual tree in a Random Forest is slightly less accurate than a single optimised tree (because it does not see all features at every split). However, the diversity gained makes the ensemble as a whole far more accurate and robust. The trade-off is interpretability -- a single tree can be visualised and understood, but a forest of 2,048 trees cannot."
 
-**EXAMPLE**: "With 225 features, each tree considers $\sqrt{225} = 15$ features at each split. This ensures that even if one feature is very strong, most trees will not have it available at the root — producing diverse trees."
+**EXAMPLE**: "With 225 features, each tree considers $\sqrt{225} = 15$ features at each split. This ensures that even if one feature is very strong, most trees will not have it available at the root -- producing diverse trees."
 
 ### If asked: "Compare Bagging and Boosting."
 
@@ -376,14 +512,53 @@ function Predict(forest, x):
 ### If asked: "Compute Information Gain for a given split."
 
 1. **Compute $H(Y)$** for the parent node
-2. **Compute $H(Y|X=v)$** for each child node
-3. **Compute $H(Y|X)$** as the weighted average
+2. **Compute $H(Y|X=v)$** for each child node (specific conditional entropy)
+3. **Compute $H(Y|X)$** as the weighted average (conditional entropy)
 4. **Compute $IG = H(Y) - H(Y|X)$**
 5. **Interpret**: "This split reduces uncertainty by ... bits, which is [good/poor]"
 
 ---
 
-## 📝 Exam Practice
+## 📝 历年真题与考试练习（Exam Questions & Practice）
+
+### S1 2025 Sample Q5 / S1 2026 Sample Q5 (3 marks) -- Feature Bagging in Random Forest
+
+**Question**: A Random Forest is built on a dataset with 225 features.
+
+(a) [2 marks] How does bagging select features in Random Forest?
+
+(b) [1 mark] Why is feature bagging beneficial?
+
+<details>
+<summary><strong>Click to reveal model answer</strong></summary>
+
+**(a)** In Random Forest, at each split in each tree, instead of evaluating all 225 features, only a **random subset** of features is considered. The typical subset size is $\sqrt{p} = \sqrt{225} = 15$ features per split. Each tree is also trained on a **bootstrap sample** -- $n$ data points sampled **with replacement** from the original $n$ data points. A large number of trees are constructed (e.g., 2,048), each using different random feature subsets at every node. The final prediction is made by **majority vote** (classification) or **averaging** (regression) across all trees.
+
+**(b)** Feature bagging is beneficial because it **decorrelates the trees** in the ensemble. Without feature bagging, if one feature is much stronger than the others, every tree would select it at the root node, making all trees highly similar. Averaging correlated predictions provides little variance reduction. By forcing each tree to consider different features, the trees become **structurally diverse**, and their averaged prediction is much more robust and accurate.
+
+</details>
+
+---
+
+### S1 2025 Actual Q4 (2 marks) -- Greedy Nature of CART
+
+**Question**: What does "greedy" mean in the context of CART decision trees?
+
+<details>
+<summary><strong>Click to reveal model answer</strong></summary>
+
+CART is **greedy** because it **selects the best split at each node without looking ahead** to future nodes. At each decision point, it evaluates all possible features and thresholds, and picks the one that maximises the Gini reduction (or minimises Gini impurity) **locally** at that node.
+
+It makes **no effort to craft an optimal tree overall** -- it simply makes the **maximally good local decision** at each step. This means:
+- A split that looks best now might not be globally optimal
+- A different first split might have led to a much better tree structure
+- But finding the globally optimal tree is **NP-complete**, so this greedy heuristic is a practical trade-off between quality and computational feasibility
+
+**Key phrase**: "CART selects the best split at each node without looking ahead, making just the maximal local decision rather than optimising the overall tree structure."
+
+</details>
+
+---
 
 ### Practice Problem 1: Entropy Calculation (2 marks)
 
@@ -403,7 +578,7 @@ This is less than 1 bit (maximum for binary), reflecting the imbalance toward po
 
 ### Practice Problem 2: Information Gain (3 marks)
 
-**Q**: Given 8 samples for "Buy Computer?" — 5 Yes, 3 No. Splitting on "Student?" gives:
+**Q**: Given 8 samples for "Buy Computer?" -- 5 Yes, 3 No. Splitting on "Student?" gives:
 - Student=Yes: 4 samples (3 Yes, 1 No)
 - Student=No: 4 samples (2 Yes, 2 No)
 
@@ -415,34 +590,43 @@ Calculate the Information Gain of splitting on "Student?"
 **Step 1**: Parent entropy:
 $$H(Y) = -\frac{5}{8}\log_2\frac{5}{8} - \frac{3}{8}\log_2\frac{3}{8} = -0.625(-0.678) - 0.375(-1.415) = 0.424 + 0.530 = 0.954 \text{ bits}$$
 
-**Step 2**: Child entropies:
+**Step 2**: Child entropies (specific conditional entropies):
 $$H(Y|\text{Student}=\text{Yes}) = -\frac{3}{4}\log_2\frac{3}{4} - \frac{1}{4}\log_2\frac{1}{4} = 0.311 + 0.500 = 0.811 \text{ bits}$$
 $$H(Y|\text{Student}=\text{No}) = -\frac{2}{4}\log_2\frac{2}{4} - \frac{2}{4}\log_2\frac{2}{4} = 0.5 + 0.5 = 1.0 \text{ bit}$$
 
-**Step 3**: Conditional entropy:
+**Step 3**: Conditional entropy (weighted average):
 $$H(Y|\text{Student}) = \frac{4}{8}(0.811) + \frac{4}{8}(1.0) = 0.406 + 0.500 = 0.906 \text{ bits}$$
 
 **Step 4**: Information Gain:
 $$IG = 0.954 - 0.906 = 0.048 \text{ bits}$$
 
-This is a very small gain — "Student?" is a weak splitting feature here.
+This is a very small gain -- "Student?" is a weak splitting feature here.
 
 </details>
 
-### Practice Problem 3: Feature Bagging in Random Forest (Q5-style, 3 marks)
+### Practice Problem 3: Gini Impurity Calculation (3 marks)
 
-**Q**: A Random Forest is built on a dataset with 225 features.
+**Q**: A node contains 20 samples: 12 Class A, 8 Class B.
 
-(a) [2 marks] Describe how feature bagging works in Random Forest.
+(a) Calculate the Gini impurity of this node.
 
-(b) [1 mark] Explain why feature bagging is beneficial.
+(b) A binary split produces: Left child (8A, 2B), Right child (4A, 6B). Calculate the weighted Gini after the split and the Gini reduction.
 
 <details>
 <summary>Click to reveal answer</summary>
 
-**(a)** Feature bagging means that at each split in each tree, instead of evaluating all 225 features, only a random subset of features is considered. Typically, $\sqrt{p} = \sqrt{225} = 15$ features are sampled (with replacement) for each split. A large number of trees (e.g., 2,048) are constructed, each using different random feature subsets at every node. The final prediction is made by majority vote across all trees.
+**(a)** Parent Gini:
+$$\text{Gini} = 1 - \left(\frac{12}{20}\right)^2 - \left(\frac{8}{20}\right)^2 = 1 - 0.36 - 0.16 = 0.48$$
 
-**(b)** Feature bagging is beneficial because it **decorrelates the trees** in the ensemble. Without feature bagging, if one feature is much stronger than the others, every tree would select it at the root node, making all trees highly similar. Averaging correlated predictions provides little variance reduction. By forcing each tree to consider different features, the trees become structurally diverse, and their averaged prediction is much more robust and accurate.
+**(b)** Child Ginis:
+$$\text{Gini}(\text{Left}) = 1 - \left(\frac{8}{10}\right)^2 - \left(\frac{2}{10}\right)^2 = 1 - 0.64 - 0.04 = 0.32$$
+$$\text{Gini}(\text{Right}) = 1 - \left(\frac{4}{10}\right)^2 - \left(\frac{6}{10}\right)^2 = 1 - 0.16 - 0.36 = 0.48$$
+
+Weighted Gini:
+$$\text{Gini}_{\text{split}} = \frac{10}{20}(0.32) + \frac{10}{20}(0.48) = 0.16 + 0.24 = 0.40$$
+
+Gini Reduction:
+$$\Delta\text{Gini} = 0.48 - 0.40 = 0.08$$
 
 </details>
 
@@ -480,25 +664,75 @@ The 3 misclassified samples now have weight 0.233 each (vs 0.1 for correct ones)
 
 </details>
 
+### Practice Problem 6: Chain Rule of Entropy (2 marks)
+
+**Q**: State the chain rule of entropy and explain what it means intuitively.
+
+<details>
+<summary>Click to reveal answer</summary>
+
+**Chain Rule:**
+$$H(X, Y) = H(X | Y) + H(Y) = H(Y | X) + H(X)$$
+
+**Intuition**: The total uncertainty of knowing both $X$ and $Y$ together equals the uncertainty of knowing $Y$ alone, plus the remaining uncertainty about $X$ after you already know $Y$ (or vice versa). In other words, you can decompose joint uncertainty into "what you know" plus "what remains."
+
+**Special case**: If $X$ and $Y$ are independent:
+$$H(X, Y) = H(X) + H(Y)$$
+because $H(X|Y) = H(X)$ (knowing $Y$ tells you nothing about $X$).
+
+</details>
+
+### Practice Problem 7: Decision Tree to Rules (2 marks)
+
+**Q**: Given the following decision tree, write out the equivalent IF-THEN rules.
+
+```
+        [Age > 30?]
+        /         \
+      Yes          No
+      /              \
+ [Income>50K?]     Reject
+    /       \
+  Yes       No
+   |         |
+ Approve   Reject
+```
+
+<details>
+<summary>Click to reveal answer</summary>
+
+```
+Rule 1: IF Age > 30 AND Income > 50K THEN Approve
+Rule 2: IF Age > 30 AND Income ≤ 50K THEN Reject
+Rule 3: IF Age ≤ 30 THEN Reject
+```
+
+Each path from root to leaf corresponds to one rule. The tree is equivalent to a **disjunction of conjunctions**: Approve IF (Age>30 AND Income>50K).
+
+</details>
+
 ---
 
 ## 🌐 English Expression Tips
 
 ### Describing Decision Trees
-
 ```
-"A decision tree is a hierarchical model where each internal node tests
- a feature, each branch represents a feature value, and each leaf node
- assigns a class label."
+"A decision tree is a non-parametric supervised learning method where each
+ internal node tests a feature, each branch represents a feature value, and
+ each leaf node assigns a class label (classification) or a continuous value
+ (regression)."
 
 "At each node, the algorithm greedily selects the feature that maximises
  information gain, defined as IG(Y|X) = H(Y) - H(Y|X)."
 
-"CART performs binary splits and uses Gini impurity: Gini(t) = 1 - Σ pᵢ²."
+"CART performs binary splits only and uses Gini impurity as its splitting
+ criterion: Gini(t) = 1 - Σ pᵢ²."
+
+"The greedy approach selects the best split at each node without looking
+ ahead, making no effort to optimise the overall tree structure."
 ```
 
 ### Describing Entropy and Information Gain
-
 ```
 "Entropy measures the average uncertainty in a distribution. High entropy
  means high impurity; low entropy means the distribution is concentrated."
@@ -508,21 +742,39 @@ The 3 misclassified samples now have weight 0.233 each (vs 0.1 for correct ones)
 
 "The feature with the highest information gain is chosen as the splitting
  criterion at each node."
+
+"Conditional entropy H(Y|X) is the weighted average of H(Y|X=x) over
+ all values of X, representing the remaining uncertainty about Y after
+ observing X."
 ```
 
 ### Describing Feature Bagging
-
 ```
 "For each tree in the forest, at each split point, a random subset of
  features — typically of size √p — is sampled, and only these features
  are evaluated as potential splits."
 
 "Feature bagging reduces the correlation between trees, which is essential
- because averaging highly correlated predictions provides little benefit."
+ because averaging highly correlated predictions provides little benefit
+ in terms of variance reduction."
+
+"The key insight is that without feature bagging, a single dominant feature
+ would appear at the root of every tree, making the ensemble redundant."
+```
+
+### Describing "Greedy" (for CART Q4)
+```
+"CART is greedy in the sense that it selects the best split at each node
+ without looking ahead to see how the split affects future nodes."
+
+"It makes the maximally good local decision at each step, with no effort
+ to craft an optimal tree overall."
+
+"This is a practical necessity because finding the globally optimal decision
+ tree is an NP-complete problem."
 ```
 
 ### Comparing Bagging and Boosting
-
 ```
 "Bagging trains classifiers independently on bootstrap samples and
  aggregates their predictions by majority vote, primarily reducing variance."
@@ -534,37 +786,33 @@ The 3 misclassified samples now have weight 0.233 each (vs 0.1 for correct ones)
  variance, while boosting operates sequentially and targets bias."
 ```
 
-### Describing AdaBoost
-
-```
-"AdaBoost maintains a weight distribution over training samples. In each
- round, it trains a weak learner, computes the weighted classification
- error, and assigns a coefficient α proportional to the learner's accuracy."
-
-"Misclassified samples receive increased weight, causing subsequent learners
- to focus more heavily on these difficult examples."
-
-"The final prediction is a weighted majority vote: H(x) = sign(Σ αₜ hₜ(x))."
-```
-
 ### Common Errors to Avoid
 
 - ❌ "Bagging reduces bias" → ✅ "Bagging reduces **variance**"
 - ❌ "Boosting reduces variance" → ✅ "Boosting reduces **bias**"
 - ❌ "Feature bagging means training on different data" → ✅ "Feature bagging means considering different **features** at each split; data sampling (bootstrapping) is separate"
-- ❌ "Random Forest = Bagging" → ✅ "Random Forest = Bagging + Feature Bagging"
+- ❌ "Random Forest = Bagging" → ✅ "Random Forest = Bagging **+ Feature Bagging**"
 - ❌ "Information Gain can be negative" → ✅ "Information Gain is always $\geq 0$"
 - ❌ "Gradient Boosting uses decision stumps" → ✅ "AdaBoost typically uses stumps; Gradient Boosting uses full trees that fit residuals"
+- ❌ "Greedy means fast" → ✅ "Greedy means selecting the locally best option without looking ahead"
+- ❌ "CART can do multiway splits" → ✅ "CART always performs **binary** splits; ID3 does multiway splits"
 
 ---
 
 ## ✅ Self-Test Checklist
 
-- [ ] Can you define entropy, conditional entropy, and information gain with formulas?
+- [ ] Can you define entropy, conditional entropy, joint entropy, and information gain with formulas?
+- [ ] Can you state the chain rule: $H(X,Y) = H(X|Y) + H(Y)$?
+- [ ] Can you distinguish specific conditional entropy $H(Y|X=x)$ from conditional entropy $H(Y|X)$?
 - [ ] Can you compute $H(Y)$ for a binary distribution by hand?
 - [ ] Can you compute $IG$ for a given feature split?
 - [ ] Can you explain the greedy tree-building algorithm?
-- [ ] Do you know why a single decision tree overfits (high variance, greedy, not globally optimal)?
+- [ ] Can you explain what "greedy" means for CART (no look-ahead, local optimum only)?
+- [ ] Do you know why finding the optimal tree is NP-complete?
+- [ ] Do you know why a single decision tree overfits (high variance, greedy, exponentially less data at lower levels)?
+- [ ] Can you explain pruning and why it helps?
+- [ ] Can you state the differences between ID3, C4.5, and CART?
+- [ ] Can you explain the expressiveness of decision trees (any Boolean function, maps to IF-THEN rules)?
 - [ ] Can you explain the 3 steps of Bagging: bootstrap → train → aggregate?
 - [ ] Do you know Random Forest = Bagging + Feature Bagging?
 - [ ] Can you explain **why** feature bagging decorrelates trees (and why that matters)?
@@ -573,5 +821,5 @@ The 3 misclassified samples now have weight 0.233 each (vs 0.1 for correct ones)
 - [ ] Can you trace through one round of AdaBoost: compute $\varepsilon_t$, $\alpha_t$, and weight update?
 - [ ] Do you know the difference between AdaBoost (adds stumps) and Gradient Boosting (fits residuals with trees)?
 - [ ] Can you write the AdaBoost final classifier: $H(x) = \text{sign}(\sum \alpha_t h_t(x))$?
-- [ ] Can you draw a decision tree diagram with internal nodes, branches, and leaves?
-- [ ] Can you explain Gini impurity and how it differs from entropy?
+- [ ] Can you draw a decision tree and convert it to IF-THEN rules?
+- [ ] Can you compute Gini impurity and Gini reduction for a split?
