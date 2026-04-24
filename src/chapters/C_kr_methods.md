@@ -1,722 +1,850 @@
-# Knowledge Representation Methods (W3L1)
+# Knowledge Representation Methods（知识表示方法）
 
-## 🎯 考试重要度
+## 🎯 Exam Importance
 
-🟡 **中频** | Week 3 Lecture 1 (44 slides) | 为后续 KG Embeddings (Sample Test Q3)、MYCIN (W4L1) 的理论基础
+🟠 **HIGH FREQUENCY** | Background knowledge for Knowledge Graphs and Expert Systems questions
 
-> **Why study this?** This lecture defines ALL five KR methods tested in this course: Symbolic Logic, Semantic Networks, Frames, Rule-Based Systems, and Knowledge Graphs. Comparison questions across these methods are a natural exam question type. Understanding each method's strengths and weaknesses is essential for design-type questions. The exercises from this lecture test inference reasoning -- a skill required across Q1 (logic), Q3 (KG embeddings), and Q5 (MYCIN).
+Knowledge Representation (KR) is the foundation that underpins KG questions, MYCIN/expert system questions, and semantic reasoning questions.
+Understanding KR methods is essential for answering the 🔴 must-know KG/TransE questions confidently.
+
+*(Lec 5 — W3L1)*
 
 ---
 
-## 📖 核心概念（Core Concepts）
+## 📖 Core Concepts
 
-| English Term | 中文 | One-line Definition |
+| Term | Definition |
+|---|---|
+| **Knowledge Representation（知识表示）** | Methods to store, retrieve, and handle knowledge so machines can reason intelligently. |
+| **Semantic Network（语义网络）** | A graph where nodes are concepts and edges are relationships (is-a, has-property). |
+| **Frame（框架）** | A structured slot-filler data structure for representing stereotyped knowledge, similar to OOP classes. |
+| **Rule-Based System（基于规则的系统）** | A system that uses IF-THEN rules to make decisions or draw conclusions. |
+| **Knowledge Graph（知识图谱）** | A large-scale graph storing real-world facts as RDF triples: (Subject, Predicate, Object). |
+| **Ontology（本体）** | A formal specification of concepts, relationships, and constraints within a domain. |
+| **Property Inheritance（属性继承）** | The ability to pass attributes from a parent concept to child concepts through a hierarchy. |
+| **Forward Chaining（前向链接）** | Reasoning from data toward conclusions — start with known facts, fire matching rules. |
+| **Backward Chaining（后向链接）** | Reasoning from a goal backward to find supporting evidence. |
+
+---
+
+## 🧠 Feynman Draft — Part 1: What Is Knowledge Representation?
+
+### The AI doctor problem
+
+Imagine you are building an AI doctor. This system needs to know things like:
+
+- Flu causes fever.
+- Aspirin treats headaches.
+- Pneumonia is serious and requires antibiotics.
+- A patient with fever AND cough AND fatigue might have flu.
+
+Now here is the real question: **how do you STORE all of this knowledge so that the AI can actually USE it?**
+
+You could dump everything into a big text file. But then how does the AI search through it? How does it connect "flu causes fever" with "this patient has a fever" to conclude "this patient might have flu"? A text dump is not enough. You need **structure**.
+
+Knowledge Representation is the study of how to organize, store, and retrieve knowledge in a form that a computer can reason with. Think of it as choosing the right **filing system** for your AI's brain.
+
+A bad filing system means your AI cannot find the right fact at the right time. A good filing system means your AI can not only look up facts but also **infer new ones** — connect the dots between things it already knows.
+
+### The five requirements — what makes a KR system "good"?
+
+Not all filing systems are equal. From the lectures *(Lec 5)*, a good KR system must satisfy **five requirements**. Let us walk through each one using a self-driving car as our running example.
+
+**Requirement 1: Expressiveness（表达力）**
+
+Your KR system must be able to represent the knowledge you actually need. For a self-driving car, you need to represent traffic rules, road layouts, pedestrian behavior, weather conditions, speed limits, and more. If your KR system can only handle simple yes/no facts, it is not expressive enough.
+
+Think of it this way: a language with only 50 words cannot describe a novel. Your KR system needs enough "vocabulary" to capture complex real-world knowledge.
+
+**Requirement 2: Computational Efficiency（计算效率）**
+
+It is not enough to store knowledge — you need to *retrieve and reason with it quickly*. A self-driving car making a lane-change decision has milliseconds, not minutes. If looking up "is it safe to turn left?" requires scanning every fact in the system, you are in trouble.
+
+Analogy: imagine a librarian who can find any book in 2 seconds versus one who takes 20 minutes. Both have the same books, but only one is useful in a time-critical situation.
+
+**Requirement 3: Scalability（可扩展性）**
+
+Your system must handle growing amounts of knowledge without breaking. A self-driving car that works perfectly in one city must be able to learn the roads of a second city, a third city, and so on. If adding more knowledge makes the whole system grind to a halt, it does not scale.
+
+Analogy: a warehouse that can add more shelves when more stock arrives, versus a closet that is already full.
+
+**Requirement 4: Interpretability（可解释性）**
+
+Humans need to understand what the system knows and why it made a decision. If your self-driving car refuses to turn left, you need to be able to inspect its knowledge and see: "Ah, it knows there is a no-left-turn sign at this intersection." Black-box knowledge that nobody can read or debug is dangerous.
+
+Analogy: a transparent filing cabinet versus a locked safe where nobody has the key.
+
+**Requirement 5: Modifiability（可修改性）**
+
+Knowledge changes. Speed limits get updated. New road construction happens. Your KR system must make it easy to add, remove, or change knowledge without rewriting everything from scratch.
+
+Analogy: a loose-leaf binder where you can swap pages, versus a stone tablet where every change requires a chisel.
+
+| Requirement | What It Means | Self-Driving Car Example |
 |---|---|---|
-| Knowledge Representation (KR)（知识表示） | 知识表示 | Methods used in AI to **store**, **retrieve**, and **handle** knowledge to enable intelligent reasoning |
-| Structured Knowledge（结构化知识） | 结构化知识 | Knowledge organized in a predefined format (databases, tables, ontologies, KGs) |
-| Unstructured Knowledge（非结构化知识） | 非结构化知识 | Knowledge without predefined structure (raw text, images, videos, free-form documents) |
-| Semantic Network（语义网络） | 语义网络 | Graph-based KR where nodes = concepts and edges = relationships (IS-A, HAS-PROPERTY) |
-| Frame（框架） | 框架 | Slot-filler structure grouping related information about an entity (concept/attribute/value) |
-| Rule-Based System (RBS)（基于规则的系统） | 基于规则系统 | KR using IF-THEN rules that trigger actions/conclusions when conditions are met |
-| Knowledge Graph (KG)（知识图谱） | 知识图谱 | Graph-based representation connecting entities (nodes) with relationships (edges) + properties |
-| RDF Triple（RDF三元组） | RDF三元组 | Atomic fact unit: (Subject, Predicate, Object) -- e.g., (Einstein, bornIn, Germany) |
-| Transitive Inference（传递推理） | 传递推理 | If A→B and B→C, then A→C; key reasoning pattern in Semantic Networks and KGs |
-| Property Inheritance（属性继承） | 属性继承 | Child concepts inherit properties from parent concepts (e.g., Dog inherits warm-blooded from Mammal) |
-| Procedural Attachment（过程附件） | 过程附件 | Frame slots that trigger actions when accessed (e.g., hotel check-in slot sends confirmation email) |
+| **Expressiveness** | Can represent complex, varied knowledge | Must handle rules, maps, weather, behavior |
+| **Computational Efficiency** | Fast retrieval and reasoning | Lane-change decisions in milliseconds |
+| **Scalability** | Handles growing knowledge | Works in one city, then ten, then a hundred |
+| **Interpretability** | Humans can inspect and understand | Engineers can debug why it stopped |
+| **Modifiability** | Easy to update | New speed limit? Change one entry, not the whole system |
+
+💡 **Core Intuition:** KR is about choosing the right container for knowledge — different containers suit different tasks, but all must be expressive, fast, scalable, readable, and updatable.
 
 ---
 
-## 🧠 费曼草稿（Feynman Draft）
+## 🧠 Feynman Draft — Part 2: Symbolic Logic in KR
 
-### The Filing Cabinet Analogy
+Before we get to the fancy graph-based methods, let us start with the oldest approach: using **formal logic** to represent knowledge.
 
-Imagine you just got hired to organize ALL the knowledge in a hospital -- every disease, every symptom, every treatment, every patient record. You need the knowledge organized so that a robot doctor can not only *look things up* but also *reason* about new patients it has never seen before. The question is: what filing system do you use?
+The idea is straightforward. You take natural language facts and translate them into precise logical statements. Remember propositional logic and first-order logic from the Symbolic Logic chapter? Here is where they become practical.
 
-It turns out there is **no single best system**. Different filing systems are good at different things. This lecture covers five of them.
+### Example: encoding medical knowledge in FOL
 
-### System 1: Symbolic Logic -- The Mathematician's Notebook
+Natural language: "Every patient with flu has a fever."
 
-You write everything as precise mathematical statements:
-- "For all x, if x has flu, then x has a fever": $\forall x\ (\text{Flu}(x) \rightarrow \text{HasSymptom}(x, \text{Fever}))$
-- "If a patient has fever AND cough, then likely diagnosis is flu": $\forall x\ (\text{HasSymptom}(x, \text{Fever}) \wedge \text{HasSymptom}(x, \text{Cough}) \rightarrow \text{LikelyDiagnosis}(x, \text{Flu}))$
+First-Order Logic:
 
-Strengths: absolutely precise, supports formal proof. Weakness: extremely rigid -- try expressing "70% chance of flu" in pure logic!
+\\[ \forall x \; (\text{Flu}(x) \rightarrow \text{HasSymptom}(x, \text{Fever})) \\]
 
-### System 2: Semantic Networks -- The Mind Map
+Natural language: "Aspirin treats headaches."
 
-Think of a giant mind map on a whiteboard. Each sticky note is a concept (Cat, Mammal, Animal, Fur), and you draw labeled arrows between them:
+FOL:
+
+\\[ \text{Treats}(\text{Aspirin}, \text{Headache}) \\]
+
+Natural language: "If a patient has fever and cough, they might have flu."
+
+FOL:
+
+\\[ \forall x \; (\text{HasSymptom}(x, \text{Fever}) \land \text{HasSymptom}(x, \text{Cough}) \rightarrow \text{PossibleDiagnosis}(x, \text{Flu})) \\]
+
+Once you have these logical statements, you can use **formal inference rules** (modus ponens, resolution, etc.) to derive new conclusions automatically. Given the fact \\(\text{Flu}(\text{Alice})\\), the system can infer \\(\text{HasSymptom}(\text{Alice}, \text{Fever})\\) purely through logical deduction.
+
+### Strengths of symbolic logic for KR
+
+- **Precision**: no ambiguity — every statement has an exact meaning
+- **Formal inference**: can automatically prove new facts from existing ones
+- **Well-studied**: centuries of mathematical theory behind it
+
+### Weaknesses of symbolic logic for KR
+
+- **Brittle**: real-world knowledge is messy and full of exceptions ("birds fly... except penguins, ostriches, injured birds...")
+- **Cannot represent uncertainty**: logic deals in true/false, but medicine often deals in "probably" and "unlikely"
+- **Hard to scale**: writing every piece of knowledge as a logical formula is tedious and error-prone
+
+⚠️ **Common Misconception:** Students sometimes think symbolic logic is outdated and irrelevant. In fact, it is the theoretical backbone of rule-based systems, ontologies, and even parts of modern knowledge graph reasoning. The exam may ask you to write FOL expressions for KR — be ready.
+
+---
+
+## 🧠 Feynman Draft — Part 3: Semantic Networks
+
+### Facts as a map
+
+Picture a city map. Cities are dots, roads are lines connecting them, and each road has a label ("highway", "side street", "one-way").
+
+A **Semantic Network** works exactly the same way:
+- **Nodes** = concepts (Dog, Animal, Fur, Bark)
+- **Edges** = labeled relationships between concepts
+
+Here is a simple semantic network for animals:
 
 ```
-Cat ──is-a──► Mammal ──is-a──► Animal
-Cat ──has──► Fur
-Mammal ──has-property──► Warm-blooded
+              Animal
+                ^
+                | is-a
+                |
+             Mammal ----has-property----> Warm-blooded
+                ^
+                | is-a
+                |
+               Cat ----has-property----> Fur
+                |
+                +------has-property----> Whiskers
 ```
 
-Now here's the magic: because Cat **is-a** Mammal, and Mammal **has-property** Warm-blooded, the system can *infer* that Cat is Warm-blooded -- even though you never wrote that explicitly. This is called **transitive inheritance**.
+And here is one for a different domain — geography:
 
-**Toy example:** Given these three facts:
-1. "Dog is-a Mammal"
-2. "Mammal is-a Animal"
-3. "Mammal has-property Warm-blooded"
+```
+   Europe
+     ^
+     | locatedIn
+     |
+   Germany ----capitalIs----> Berlin
+     ^
+     | bornIn
+     |
+  Einstein ----is-a----> Physicist
+```
 
-The system infers: "Dog is-a Animal" (transitive IS-A) and "Dog has-property Warm-blooded" (property inheritance).
+### The magic trick: property inheritance
 
-### System 3: Frames -- The Object-Oriented Database
+This is the most important concept in semantic networks, and it comes up on exams repeatedly.
 
-Imagine describing a car using a form you fill out:
+Look at this hierarchy:
 
-| Frame: Car | Slot (Attribute) | Filler (Value) |
+```
+           Animal ----has-property----> Needs-Food
+              ^
+              | is-a
+              |
+           Mammal ----has-property----> Warm-blooded
+              ^                         Has-Hair
+              | is-a
+              |
+             Cat ----has-property----> Purrs
+```
+
+Now, nobody explicitly told the system that "Cat is warm-blooded" or "Cat needs food." But the system can **infer** these facts by following the is-a chain upward:
+
+1. Cat **is-a** Mammal
+2. Mammal **has-property** Warm-blooded
+3. Therefore: Cat **has-property** Warm-blooded (inherited!)
+
+This continues further:
+
+4. Mammal **is-a** Animal
+5. Animal **has-property** Needs-Food
+6. Therefore: Cat **has-property** Needs-Food (inherited through two levels!)
+
+This is **property inheritance** — child nodes automatically receive the properties of all their ancestors in the is-a hierarchy. It is powerful because you do not need to repeat common facts for every single concept.
+
+### A concrete toy example
+
+Suppose we have these explicit facts in our semantic network:
+
+- Dog **is-a** Mammal
+- Mammal **is-a** Animal
+- Animal **has-property** Breathes
+- Mammal **has-property** Has-Hair
+- Dog **has-property** Can-Bark
+
+Question: Does Dog breathe?
+
+Reasoning chain:
+1. Dog is-a Mammal (direct edge)
+2. Mammal is-a Animal (direct edge)
+3. Animal has-property Breathes (direct edge)
+4. By inheritance: Dog has-property Breathes ✓
+
+The system never needed to be told "Dog breathes" explicitly. It figured it out.
+
+### Strengths of semantic networks
+
+- **Intuitive**: mirrors how humans organize categories mentally
+- **Supports inference**: property inheritance lets you derive new knowledge
+- **Visual**: easy to draw and understand (great for exam diagrams)
+- **Efficient retrieval**: just follow edges from a node to find related concepts
+
+### Weaknesses of semantic networks
+
+- **No standardization**: there is no universal rule about what edge labels to use. One person writes "is-a", another writes "type-of", another writes "subclass-of" — they all mean the same thing but the system does not know that.
+- **Cannot handle uncertainty**: every edge is either there or not. You cannot say "Dog *probably* has-property Friendly."
+- **Scales poorly**: as the network grows to thousands of nodes, it becomes tangled and hard to maintain.
+- **Exception handling is awkward**: penguins are birds but cannot fly. The is-a hierarchy says Bird has-property Can-Fly, so Penguin inherits Can-Fly, which is wrong. You need special "exception" mechanisms that make the network messy.
+
+---
+
+## 🧠 Feynman Draft — Part 4: Frames
+
+### Knowledge as forms to fill in
+
+Now imagine you are checking into a hotel. They hand you a registration form:
+
+| Slot | Filler |
+|---|---|
+| Name | _______ |
+| Check-in date | _______ |
+| Room type | Standard (default) |
+| Breakfast included | Yes (default) |
+
+A **Frame** is exactly this — a structured template with **slots** (attributes) and **fillers** (values). Some slots have **default values** that apply unless you override them.
+
+### Frame example: the animal kingdom
+
+```
+Frame: Animal
+  Slot: breathes       Filler: True
+  Slot: needs-food     Filler: True
+
+Frame: Mammal (inherits from Animal)
+  Slot: has-hair       Filler: True
+  Slot: warm-blooded   Filler: True
+
+Frame: Dog (inherits from Mammal)
+  Slot: can-bark       Filler: True
+  Slot: legs           Filler: 4
+
+Frame: Bird (inherits from Animal)
+  Slot: can-fly        Filler: True (default)
+  Slot: has-wings      Filler: True
+  Slot: legs           Filler: 2
+
+Frame: Penguin (inherits from Bird)
+  Slot: can-fly        Filler: False    ← overrides the default!
+  Slot: habitat        Filler: Antarctic
+```
+
+Notice how Penguin inherits everything from Bird (has-wings = True, legs = 2) but **overrides** the can-fly slot. This is exactly how **class inheritance with method overriding** works in OOP.
+
+### Frames vs OOP — the connection
+
+This is worth knowing because the exam might ask you to explain frames using a programming analogy.
+
+| Concept | Frame Terminology | OOP Terminology |
 |---|---|---|
-| Car | Brand | Tesla |
-| | Colour | Red |
-| | Engine | Electric |
-| | Owner | Alice |
+| Template | Frame | Class |
+| Attribute | Slot | Field / Property |
+| Value | Filler | Value |
+| Hierarchy | is-a link | extends / inherits |
+| Default value | Default filler | Default field value |
+| Override | Override slot | Override method/field |
 
-Each frame is like an **object in programming** -- it has attributes (slots) and values (fillers). Frames can do four clever things:
+This is not a coincidence. OOP was partly inspired by frame-based AI research from the 1970s (Marvin Minsky).
 
-1. **Default values**: If you create a new "Dog" frame and don't specify legs, it defaults to 4 (inherited from "Mammal" frame)
-2. **Inheritance**: A "Dog" frame inherits "Has Hair = True" from the "Mammal" frame
-3. **Slot constraints**: A "Student" frame requires Age > 5
-4. **Procedural attachment**: Accessing the "Check-in Time" slot of a "Hotel Reservation" frame automatically triggers sending a confirmation email
-
-### System 4: Rule-Based Systems -- The Decision Flowchart
-
-You encode every decision as an IF-THEN rule:
+### A concrete data example
 
 ```
-R1: IF Fever AND Cough                    THEN Possible Diagnosis = Flu
-R2: IF Fever AND Joint Pain AND Travel     THEN Possible Diagnosis = Dengue Fever
-R3: IF Cough AND Difficulty Breathing      THEN Possible Diagnosis = Pneumonia
+Frame: Car
+  Slot: brand         Filler: _______
+  Slot: color         Filler: _______
+  Slot: engine        Filler: Gasoline (default)
+  Slot: wheels        Filler: 4
+  Slot: owner         Filler: _______
+
+Instance: my-car (instance of Car)
+  Slot: brand         Filler: Tesla
+  Slot: color         Filler: Red
+  Slot: engine        Filler: Electric  ← overrides default
+  Slot: owner         Filler: Alice
+  (wheels = 4, inherited from Car)
 ```
 
-Patient comes in with Fever + Cough + Joint Pain + Recent Travel? R1 fires (Flu) and R2 fires (Dengue Fever). The system considers both.
+### Strengths of frames
 
-This is the simplest form -- it's **transparent** (you can trace exactly which rules fired) but **brittle** (you need a rule for every possible situation, and they don't generalize).
+- **Organized and structured**: every concept has a clear template
+- **Supports defaults**: common properties do not need to be repeated
+- **Inheritance with overrides**: handles exceptions cleanly (unlike semantic networks)
+- **Familiar to programmers**: works like OOP classes
 
-### System 5: Knowledge Graphs -- The Fact Encyclopedia
+### Weaknesses of frames
 
-You store millions of specific facts as triples:
-
-```
-(Albert Einstein, Born In, Germany)
-(Albert Einstein, Discovered, Theory of Relativity)
-(Theory of Relativity, Related To, Physics)
-```
-
-The power is in **graph traversal for inference**: if you ask "Did Einstein contribute to Physics?", the system walks the graph: Einstein → Discovered → Theory of Relativity → Related To → Physics. Yes!
+- **Rigid schema**: every concept must fit into a predefined template
+- **Hard to scale**: thousands of frames with complex inheritance become difficult to manage
+- **Not great for relational knowledge**: frames describe individual concepts well, but relationships between concepts are secondary
 
 ---
 
-⚠️ **Common Misconception**: Students often think these five methods are "versions" of the same thing (1.0, 2.0, etc.). They are NOT. They are **five different paradigms** -- each stores knowledge in a fundamentally different way and supports different kinds of reasoning. The slide explicitly states: "They are different KR paradigms, not different types of Knowledge Graphs."
+## 🧠 Feynman Draft — Part 5: Rule-Based Systems
 
-⚠️ **Common Misconception**: Semantic Networks and Knowledge Graphs look similar (both are graphs), but they differ in **standardization** and **scale**. Semantic Networks have no unified standard and are typically small/domain-specific (1960s--1980s research). Knowledge Graphs use standardized RDF triples and are designed for web-scale (billions of facts, 2000s--present).
+### Knowledge as recipes
 
-💡 **Core Intuition**: KR is about choosing which "filing system" to organize knowledge -- as logic, mind maps, forms, rules, or fact graphs -- so machines can reason, not just store.
+Think of a cookbook. Each recipe says: "IF you have these ingredients AND you do these steps, THEN you get this dish."
 
----
+A **Rule-Based System** stores all of its knowledge as IF-THEN rules:
 
-## 📐 正式定义（Formal Definition）
+```
+Rule 1: IF patient has fever AND patient has cough
+        THEN suspect flu
 
-### What is Knowledge Representation?
+Rule 2: IF suspect flu AND no complications
+        THEN prescribe rest and fluids
 
-**Definition (from slides):** Knowledge Representation (KR) refers to the methods used in AI to **store**, **retrieve**, and **handle** knowledge to enable intelligent reasoning.
+Rule 3: IF patient has fever AND patient has rash AND patient is child
+        THEN suspect measles
 
-**Why do we need KR?**
-- Bridges raw data and intelligent decision-making
-- Allows AI to reason logically and infer new facts
-- Enables knowledge-driven applications (expert systems, search engines, autonomous robots, chatbots)
+Rule 4: IF suspect measles
+        THEN recommend isolation AND contact health authority
+```
 
-### Five Key Requirements of KR
+Given a set of **known facts** about a patient, the system checks which rules' IF-conditions are satisfied, fires those rules, and produces conclusions. Those conclusions may trigger further rules, creating a **chain of reasoning**.
 
-| Requirement | Description | Example (from slides) |
+### Forward chaining vs backward chaining
+
+There are two ways to run a rule-based system. This is an important distinction for the exam.
+
+**Forward Chaining（前向链接）: data drives conclusions**
+
+You start with what you know (the facts) and keep firing rules until no more rules apply.
+
+```
+Known facts: {fever, cough}
+
+Step 1: Rule 1 matches (fever AND cough) → add "suspect flu"
+Step 2: Rule 2 matches (suspect flu AND no complications [assumed]) → add "prescribe rest"
+Step 3: No more rules match → STOP
+
+Final conclusions: {fever, cough, suspect flu, prescribe rest}
+```
+
+Forward chaining is **data-driven**: you start with evidence and see where it leads.
+
+**Backward Chaining（后向链接）: goals drive evidence search**
+
+You start with a goal (something you want to prove) and work backward to find supporting evidence.
+
+```
+Goal: Does the patient have measles?
+
+Step 1: Rule 3 says measles requires {fever, rash, is-child}
+Step 2: Check: does the patient have fever? → YES (known fact)
+Step 3: Check: does the patient have rash? → YES (known fact)
+Step 4: Check: is the patient a child? → YES (known fact)
+Step 5: All conditions met → CONCLUDE measles
+```
+
+Backward chaining is **goal-driven**: you start with a hypothesis and see if the evidence supports it.
+
+| Aspect | Forward Chaining | Backward Chaining |
 |---|---|---|
-| **Expressiveness**（表达力） | Can represent **complex and abstract** knowledge | A self-driving car must represent traffic rules, pedestrian movement, road conditions |
-| **Computational Efficiency**（计算效率） | Can **process information quickly** | AI fraud detection must analyze thousands of transactions per second |
-| **Scalability**（可扩展性） | Can **handle large and growing** knowledge bases | Google's Knowledge Graph contains **billions** of facts and relationships |
-| **Interpretability**（可解释性） | Humans can **understand** how AI makes decisions | AI medical diagnosis must provide **clear reasoning** for treatment recommendations |
-| **Modifiability**（可修改性） | Can **update itself** with new knowledge | AI chatbots must constantly **learn** from new conversations |
+| Direction | Data → Conclusions | Goal → Evidence |
+| Starting point | Known facts | A question or hypothesis |
+| Strategy | Fire all matching rules | Find rules that conclude the goal |
+| Analogy | Detective collecting clues | Lawyer building a case for a verdict |
+| Use case | Monitoring systems, alerts | Diagnostic systems, Q&A |
 
-**Case Study from slides: Self-Driving Car**
-- **Expressiveness** → represents road conditions, traffic signals, vehicle movement
-- **Computational Efficiency** → processes sensor data in real-time for immediate decisions
-- **Scalability** → expands knowledge of new routes and driving patterns
-- **Interpretability** → AI must explain why it brakes or changes lanes
-- **Modifiability** → updates driving models based on new road conditions
+### Connection to expert systems
 
-### Structured vs Unstructured Knowledge
+Rule-based systems are the foundation of **Expert Systems** like MYCIN (which diagnoses bacterial infections). MYCIN uses backward chaining with **certainty factors** to handle uncertainty — something basic rule-based systems cannot do. This is covered in detail in the [Expert Systems chapter](./E_mycin.md).
 
-| Feature | Structured Knowledge | Unstructured Knowledge |
+### Strengths of rule-based systems
+
+- **Transparent**: you can trace exactly which rules fired and why — full explainability
+- **Easy for domain experts**: a doctor can write "IF fever AND cough THEN flu" without knowing programming
+- **Modular**: each rule is independent, so you can add or remove rules without breaking others (in theory)
+
+### Weaknesses of rule-based systems
+
+- **Does not scale well**: hundreds of interacting rules become very hard to manage and debug
+- **Brittle**: if the real world does not match the rules exactly, the system fails. What if the patient has "mild fever"? The rule says "fever", not "mild fever."
+- **Cannot learn from data**: rules must be hand-written by human experts
+- **Rule conflicts**: what if Rule 5 says "prescribe drug A" and Rule 6 says "prescribe drug B"? You need a conflict resolution strategy.
+
+---
+
+## 🧠 Feynman Draft — Part 6: Knowledge Graphs
+
+### Semantic Networks that graduated and got a job at Google
+
+A Knowledge Graph is essentially a Semantic Network that has been **standardized and scaled up massively**. The key innovation is using a fixed format for every fact: the **RDF triple**.
+
+Every piece of knowledge in a KG is stored as:
+
+```
+(Subject, Predicate, Object)
+```
+
+Examples:
+
+```
+(Einstein,   bornIn,      Germany)
+(Einstein,   is-a,        Physicist)
+(Germany,    locatedIn,   Europe)
+(Einstein,   wonAward,    NobelPrize)
+(NobelPrize, awardedIn,   1921)
+```
+
+That is it. Every fact in the entire knowledge graph — whether it is about physics, geography, history, or medicine — uses this same three-part structure. This standardization is what makes KGs interoperable and scalable to billions of facts.
+
+### Real-world knowledge graphs
+
+- **Google Knowledge Graph**: powers those info boxes when you search for a person or place
+- **Wikidata**: open-source KG with over 100 million items
+- **DBpedia**: structured data extracted from Wikipedia
+
+### Semantic Network vs Knowledge Graph
+
+Students often confuse these. Here is the key distinction:
+
+| Aspect | Semantic Network | Knowledge Graph |
 |---|---|---|
-| **Format** | Organized in tables, graphs, or schemas | Free-form (text, images, videos) |
-| **Storage** | Databases, ontologies, knowledge graphs | Documents, multimedia files |
-| **Processing** | Fast and efficient queries | Requires NLP, deep learning |
-| **Interpretability** | High -- easy to understand | Low -- requires advanced AI |
-| **Flexibility** | Rigid -- schema-dependent | Flexible -- can capture complex knowledge |
+| **Scale** | Small to medium (dozens to hundreds of nodes) | Massive (millions to billions of triples) |
+| **Standardization** | No universal format for edges | Standardized: RDF / OWL standards |
+| **Inference** | Graph traversal only | Embeddings (TransE, etc.) + traversal |
+| **Uncertainty** | Not supported | Partially supported (confidence scores) |
+| **Querying** | Ad hoc traversal | SPARQL query language |
+| **Use case** | Academic examples, small expert systems | Google Search, Watson, Wikidata |
+| **Era** | 1960s–1980s AI research | 2010s–present industry applications |
+| **Exam Tip** | Know the structure (nodes + labeled edges) | Know the triple format (h, r, t) and TransE |
 
-**Examples of Structured:** Relational databases (SQL), Knowledge Graphs (Google KG), Ontologies (medical taxonomy)
-
-**Examples of Unstructured:** News articles, research papers, videos, images, audio recordings, conversations, emails
-
-### Symbolic Logic in KR
-
-**Definition:** Represents knowledge using **formal symbols** and **logical expressions**. Used for reasoning, inference, and formal verification.
-
-Two types used in KR:
-- **Propositional Logic (PL)** -- simple true/false statements
-- **First-Order Logic (FOL)** -- allows relationships between entities with quantifiers
-
-**FOL Rules Example (Medical Diagnosis):**
-- $\forall x\ (\text{Flu}(x) \rightarrow \text{HasSymptom}(x, \text{Fever}))$ -- "If a patient has the flu, they will have a fever"
-- $\forall x\ (\text{HasSymptom}(x, \text{Fever}) \wedge \text{HasSymptom}(x, \text{Cough}) \rightarrow \text{LikelyDiagnosis}(x, \text{Flu}))$ -- AI can infer from known symptoms to diagnose patients
-
-### Semantic Networks -- Formal Structure
-
-A **graph-based** KR where:
-- **Nodes (Entities/Concepts):** represent objects, ideas, or concepts (e.g., "Cat", "Mammal", "Animal")
-- **Edges (Relationships/Connections):** define how entities are related (e.g., "is-a", "has-part", "related-to")
-
-**Two key inference mechanisms:**
-
-1. **Hierarchical Reasoning (IS-A Inference):** Given "Cat → is-a → Mammal" and "Mammal → is-a → Animal", AI infers "Cat is an Animal" via transitive inheritance
-
-2. **Property Inheritance:** Given "Mammal → has-property → Warm-blooded" and "Dog → is-a → Mammal", AI infers "Dog is warm-blooded" (inherits properties from parent)
-
-**Strengths of Semantic Networks:**
-1. **Natural Representation** -- mimics human thought; relationships are intuitive and visually clear
-2. **Supports Logical Inference** -- AI can deduce new facts through IS-A and HAS-PROPERTY relationships
-3. **Efficient Knowledge Retrieval** -- graph structures allow fast lookups using connected nodes
-
-**Weaknesses of Semantic Networks:**
-1. **Can Become Too Complex** -- large networks with millions of nodes can be hard to manage
-2. **No Standardized Representation** -- different AI models use different graph structures; integration is difficult
-3. **Poor Handling of Uncertainty** -- assumes relationships are deterministic (e.g., "Birds can fly" -- but what about penguins?)
-
-### Frames -- Formal Structure
-
-A **frame** is a structured representation that groups related information about an entity into a **slot-filler** structure.
-
-- A **frame** = concept/object
-- A **slot** = attribute/property
-- A **filler** = value for that slot
-
-**Frame-Based Reasoning (four mechanisms):**
-
-1. **Default Values:** If a slot is empty, AI uses default knowledge. Example: Frame **Dog**, Slot **Has legs** → Default value = 4. AI infers a newly introduced dog has 4 legs unless specified otherwise.
-
-2. **Inheritance (Frame Hierarchies):** Frames inherit attributes from higher-level frames (similar to OOP). Example: Frame **Mammal** → Has Hair = True; Frame **Dog** (inherits from Mammal) → Has Hair = True.
-
-3. **Slot Constraints & Conditions:** Some slots have restrictions on valid values. Example: Frame **Student**, Slot **Age** → Constraint: Must be > 5 years old.
-
-4. **Procedural Attachment:** Some slots trigger actions when accessed. Example: Frame **Hotel Reservation**, Slot **Check-in Time** → Action: Send confirmation email.
-
-**Strengths of Frames:**
-1. **Structured & Organized** -- groups related knowledge into slot-filler structures for efficient retrieval
-2. **Inheritance and Default Reasoning** -- infers missing values using defaults and hierarchical inheritance
-3. **Procedural Knowledge** -- slots can trigger actions (procedural attachments)
-4. **Easy to Update & Modify** -- slots and fillers can be modified dynamically
-
-**Weaknesses of Frames:**
-1. **Rigid Structure & Limited Flexibility** -- struggle with ambiguous or novel cases (e.g., a "Vehicle" frame might not account for futuristic self-driving cars)
-2. **Poor Handling of Uncertainty** -- assume knowledge is complete; difficult to reason with probabilities
-3. **Hard to Scale for Large Knowledge Bases** -- grow complex as entities and slots increase
-4. **Limited Logical Reasoning** -- do not perform deep logical deductions (can store "All birds can fly" but don't automatically reason exceptions like penguins)
-
-### Rule-Based Systems -- Formal Structure
-
-A Rule-Based System (RBS) represents knowledge as a set of **IF-THEN** rules that trigger actions when conditions are met.
-
-**Structure:** IF (Condition) → THEN (Action/Conclusion). AI checks facts and applies the appropriate rule.
-
-**Strengths:**
-1. **Transparent and Explainable** -- every decision is based on clear, human-readable IF-THEN rules
-2. **Easy to Implement for Well-Defined Problems** -- works effectively in structured domains with known rules
-3. **Works Without Large Training Data** -- does not require massive datasets (unlike ML)
-
-**Weaknesses:**
-1. **Hard to Scale with Complex Knowledge** -- managing thousands of IF-THEN rules becomes difficult
-2. **Poor Adaptability to New Situations** -- cannot generalize beyond predefined rules
-3. **Requires Expert Knowledge to Define Rules** -- rules must be handcrafted by domain experts
-
-### Knowledge Graphs -- Formal Structure
-
-A KG is a **graph-based** representation that connects **entities** (nodes) with **relationships** (edges) and **properties**.
-
-**Components:**
-- **Nodes** = Entities/Subjects (people, places, objects)
-- **Edges** = Relationships/Predicates
-- **Properties** = Attributes of entities or relations
-
-**RDF Triple format:** (Subject, Predicate, Object) = (Head, Relation, Tail)
-
-**Four types of KG inference (from slides):**
-1. **Transitive Inference**: $(A \rightarrow B, B \rightarrow C) \Rightarrow (A \rightarrow C)$. Example: "Einstein discovered Theory of Relativity" + "Theory of Relativity is part of Physics" ⇒ "Einstein contributed to Physics"
-2. **Relationship Expansion**: Identify hidden connections. Example: if two lectures are taught by the same professor, infer a collaboration link
-3. **Entity Disambiguation**: Distinguish entities with similar names. Example: "Apple (Company)" vs. "Apple (Fruit)"
-4. **Question Answering**: Retrieve structured answers. Example: "Who invented the telephone?" → Alexander Graham Bell (from graph relations)
-
-**Strengths of Knowledge Graphs:**
-1. **Highly Structured & Interpretable** -- provides clearly defined relationships between entities
-2. **Enables Inference & Knowledge Discovery** -- infer missing knowledge based on known relationships
-3. **Scalable for Large-Scale KR** -- works well with millions of facts and relationships
-4. **Supports Multi-Domain Knowledge Integration** -- combine medical, scientific, business knowledge into one system
-
-**Weaknesses of Knowledge Graphs:**
-1. **Incomplete Knowledge & Data Sparsity** -- if information is missing, AI cannot infer accurate answers
-2. **High Maintenance & Complexity** -- requires constant updates to add new entities and relationships
+The detailed coverage of KG embeddings (TransE, TransR) and link prediction is in the [Knowledge Graphs chapter](./D_knowledge_graphs.md).
 
 ---
 
-## 🔄 机制与推导（How It Works）
+## 🧠 Feynman Draft — Part 7: Ontologies
 
-### How Semantic Network Inference Works -- Step by Step
+### The rule book for your knowledge graph
+
+Imagine you run a hospital database. You have a knowledge graph full of facts:
 
 ```
-Given knowledge:
-  Cat ──is-a──► Mammal ──is-a──► Animal
-  Mammal ──has-property──► Warm-blooded
-  Cat ──has──► Fur
-
-Step 1: Query "Is Cat an Animal?"
-  Traverse: Cat → is-a → Mammal → is-a → Animal
-  Answer: YES (transitive IS-A inference)
-
-Step 2: Query "Is Cat warm-blooded?"
-  Cat → is-a → Mammal → has-property → Warm-blooded
-  Answer: YES (property inheritance)
-
-Step 3: Query "Does Dog have Fur?"
-  Dog → is-a → Mammal (known)
-  Mammal ──has──► ? (no "has Fur" on Mammal)
-  Answer: CANNOT INFER (Fur is a property of Cat specifically, 
-          not inherited through Mammal)
+(Aspirin, treats, Headache)
+(Penicillin, treats, Infection)
+(Dr. Smith, treats, Headache)    ← WAIT. This is wrong!
 ```
 
-### How Frame Reasoning Works -- Step by Step
+"Dr. Smith treats Headache" uses the same "treats" relationship, but Dr. Smith is a person, not a medicine. The knowledge graph does not know this is invalid because it has no rules about what **types** of things can be connected by "treats."
 
-**Scenario (Exercise 3 from slides):** An AI healthcare assistant uses Frames.
+This is where **Ontologies** come in.
 
-Patient **Alice** reports: **fever** and **headache**.
+An ontology is a formal description of:
+1. **Concepts** (classes): Medicine, Disease, Doctor, Patient
+2. **Relationships**: treats, diagnoses, prescribes
+3. **Constraints** (rules about what is valid):
+   - ONLY things of type "Medicine" can "treat" things of type "Disease"
+   - ONLY things of type "Doctor" can "diagnose" things of type "Disease"
+   - A "Patient" cannot "prescribe" a "Medicine"
 
-| Frame: Patient | Slot | Filler |
+With an ontology in place, the system would **reject** the triple (Dr. Smith, treats, Headache) because Dr. Smith is a Doctor, not a Medicine, and the ontology says only Medicines can treat Diseases.
+
+### Knowledge Graph + Ontology = powerful reasoning
+
+Think of it this way:
+
+| Component | Role | Analogy |
 |---|---|---|
-| Alice | Age | 25 |
-| | Symptoms | Fever, Headache |
-| | Family History | None |
-| | Recent Travel | Tropical regions (2 weeks ago) |
-| | Vaccination History | No recent travel vaccines |
+| **Knowledge Graph** | Stores facts | The actual data in a spreadsheet |
+| **Ontology** | Defines rules and schema | The column headers and validation rules |
+| **Together** | Facts + rules = reasoning | A well-designed database with constraints |
 
-| Frame: Malaria | Slot | Filler |
+The ontology tells you **what kinds of knowledge are valid**. The knowledge graph stores **specific instances of that knowledge**. Together, they enable powerful reasoning:
+
+- **Consistency checking**: "Is this new fact valid according to the ontology?"
+- **Classification**: "What type of entity is X, given its properties?"
+- **Inference**: "If X is a type of Medicine and treats Disease Y, what else can we infer?"
+
+### Ontology vs Knowledge Graph — the exam distinction
+
+| Aspect | Knowledge Graph | Ontology |
 |---|---|---|
-| Malaria | Common Symptoms | Fever, Headache, Chills |
-| | Transmission Risk | High in tropical regions |
-| | Prevention | Vaccination |
+| **Contains** | Specific facts about the world | Rules about what facts are valid |
+| **Example** | (Aspirin, treats, Headache) | "Only Medicines can treat Diseases" |
+| **Analogy** | Data rows in a database | Schema + constraints of the database |
+| **Purpose** | Store and retrieve facts | Define structure and validate facts |
+| **Language** | RDF triples | OWL (Web Ontology Language) |
 
-**Reasoning process:**
-1. **Slot matching**: Alice's symptoms (Fever, Headache) match Malaria's Common Symptoms (Fever, Headache, Chills) -- 2 out of 3 match
-2. **Cross-frame inference**: Alice's Recent Travel = "Tropical regions" matches Malaria's Transmission Risk = "High in tropical regions"
-3. **Default/constraint check**: Alice has no travel vaccines (Vaccination History slot) and Malaria's Prevention = Vaccination → increased susceptibility
-4. **Conclusion**: Malaria flagged as potential diagnosis
+⚠️ **Common Misconception:** Students often treat "ontology" and "knowledge graph" as synonyms. They are not. A KG stores facts; an ontology defines the rules and structure those facts must follow. An ontology without a KG is an empty schema. A KG without an ontology is an unvalidated pile of triples.
 
-### How Rule-Based Systems Work -- Step by Step
+---
 
-**Scenario (Exercise 4 from slides):** Fire detection system.
+## 🧠 Feynman Draft — Part 8: Structured vs Unstructured Knowledge
 
-| Rule ID | IF Condition | THEN Conclusion |
+### Not all knowledge comes in neat boxes
+
+So far, every KR method we have discussed produces **structured knowledge** — organized, machine-readable, directly queryable. But most of the world's knowledge is **unstructured**.
+
+| Aspect | Structured Knowledge | Unstructured Knowledge |
 |---|---|---|
-| R1 | Temperature > 60C AND Smoke Detected | Trigger Fire Alarm |
-| R2 | Temperature > 80C | Trigger Emergency Evacuation |
-| R3 | Carbon Monoxide > Safe Limit | Alert Building Manager |
-| R4 | Sprinklers Activated AND Smoke Detected | Confirm Fire |
+| **Format** | Tables, graphs, triples, frames | Free text, images, audio, video |
+| **Examples** | KGs, databases, ontologies, rule bases | Wikipedia articles, medical textbooks, X-rays |
+| **Machine readability** | High — directly queryable | Low — requires NLP, CV, or speech processing |
+| **Expressiveness** | Limited to the schema | Unlimited — natural language can express anything |
+| **Reasoning** | Direct logical inference | Must extract structure first, then reason |
+| **Volume** | Small fraction of world knowledge | Vast majority of world knowledge |
 
-**Current sensor readings:** Temperature = 85C, Smoke = YES, Carbon Monoxide = Safe, Sprinklers = NO
+The key insight: **most of the world's knowledge is unstructured**, but AI reasoning systems need structured knowledge. This is why fields like NLP (extracting facts from text) and Computer Vision (extracting facts from images) are so important — they convert unstructured knowledge into structured form.
 
-**Forward chaining:**
-1. Check R1: Temperature (85) > 60C ✅ AND Smoke Detected ✅ → **Fire Alarm triggered**
-2. Check R2: Temperature (85) > 80C ✅ → **Emergency Evacuation triggered**
-3. Check R3: Carbon Monoxide = Safe ❌ → R3 does NOT fire
-4. Check R4: Sprinklers = NO ❌ → R4 does NOT fire
+### Example: building a medical KG from text
 
-**Final actions:** Trigger Fire Alarm (R1) + Trigger Emergency Evacuation (R2)
+1. **Unstructured**: "Aspirin is commonly used to treat headaches and reduce inflammation."
+2. **NLP extraction**: identifies entities (Aspirin, headaches, inflammation) and relationships (treats, reduces)
+3. **Structured triples**: (Aspirin, treats, Headache), (Aspirin, reduces, Inflammation)
 
-### How Knowledge Graph Inference Works -- Step by Step
+This pipeline — from unstructured text to structured KG — is an active research area and a common exam topic when discussing KG construction.
 
-**Scenario (Exercise 5 from slides):** Historical figures KG.
+---
 
-| Entity (Node) | Relation (Edge) | Entity (Node) |
+## 📐 Formal Definitions
+
+### Semantic Network
+
+A directed labeled graph \\( G = (V, E) \\) where:
+- \\( V \\) = set of concept nodes
+- \\( E \subseteq V \times L \times V \\) = set of labeled directed edges
+- \\( L \\) = set of relationship labels (e.g., is-a, has-property)
+
+### Frame
+
+A structured record \\( F = \\{(s_1, v_1), (s_2, v_2), \ldots, (s_n, v_n)\\} \\) where:
+- \\( s_i \\) = slot name (attribute)
+- \\( v_i \\) = filler value (which may be a default)
+- Frames can inherit slots from parent frames via an **is-a** link.
+
+### Knowledge Graph Triple
+
+An RDF triple \\( (h, r, t) \\) where:
+- \\( h \\) = head entity (subject)
+- \\( r \\) = relation (predicate)
+- \\( t \\) = tail entity (object)
+
+### Ontology (formal)
+
+An ontology \\( O = (C, R, A) \\) where:
+- \\( C \\) = set of classes (concepts)
+- \\( R \\) = set of relations between classes
+- \\( A \\) = set of axioms (constraints and rules governing valid relationships)
+
+---
+
+## ⚖️ Trade-offs & Comparisons
+
+### Master Comparison Table: All KR Methods
+
+| Method | Representation | Expressiveness | Scalability | Interpretability | Uncertainty | Best For |
+|---|---|---|---|---|---|---|
+| **Symbolic Logic** | FOL formulas | High | Low | High | None | Precise, small domains |
+| **Semantic Network** | Labeled graph | Medium | Low-Medium | High | None | Taxonomies, hierarchies |
+| **Frame** | Slot-filler records | Medium | Medium | High | None | Stereotyped concepts |
+| **Rule-Based** | IF-THEN rules | Medium | Low | Very High | None (basic) | Expert systems, diagnosis |
+| **Knowledge Graph** | RDF triples | Medium-High | Very High | Medium | Partial | Large-scale fact storage |
+| **Ontology** | Classes + axioms | High | Medium | Medium | None | Schema definition, validation |
+
+### When to Use Which Method
+
+| Scenario | Best Method | Why |
 |---|---|---|
-| Isaac Newton | Discovered | Law of Gravity |
-| Law of Gravity | Related To | Physics |
-| Albert Einstein | Contributed To | Physics |
-| Albert Einstein | Developed | Theory of Relativity |
-| Theory of Relativity | Related To | Gravity |
-| Theory of Relativity | Influenced By | Law of Gravity |
-
-**Query:** "Did Isaac Newton's discoveries influence Albert Einstein?"
-
-**Graph traversal:**
-```
-Newton ──Discovered──► Law of Gravity
-                            │
-                      Influenced ▼
-                  Theory of Relativity ◄──Developed── Einstein
-```
-
-Path: Newton → Discovered → Law of Gravity → Influenced → Theory of Relativity ← Developed ← Einstein
-
-**Answer:** YES -- Newton's Law of Gravity influenced Einstein's Theory of Relativity. The graph does not connect them *directly*, but AI can infer the relationship by traversing the graph.
+| Medical diagnosis system | Rule-Based + Ontology | Clear rules, need explainability |
+| Web-scale fact search (Google) | Knowledge Graph | Billions of facts, needs scale |
+| Animal taxonomy for a textbook | Semantic Network | Simple hierarchy, visual |
+| Hotel booking system | Frames | Structured records with defaults |
+| Legal reasoning | Symbolic Logic | Precise, formal, no ambiguity |
+| Product recommendation | Knowledge Graph | Connects users, products, attributes at scale |
 
 ---
 
-## ⚖️ 权衡分析（Trade-offs & Comparisons）
+## 🏗️ Design Question Answer Framework
 
-### Complete KR Methods Comparison Table
+> "Compare two KR methods and discuss when each is appropriate."
 
-| Feature | Symbolic Logic | Semantic Networks | Frames | Rule-Based Systems | Knowledge Graphs |
-|---|---|---|---|---|---|
-| **Core idea** | Formal logical expressions (PL, FOL) | Nodes = concepts, edges = relationships | Slot-filler structures (object-like) | IF-THEN rules for decisions | Entity-relation-entity triples |
-| **Representation** | Mathematical formulas | Graph (nodes + edges) | Structured records (slots + fillers) | Production rules | RDF triples (S, P, O) |
-| **Reasoning** | Formal proof / inference rules | Transitive IS-A, property inheritance | Default values, inheritance, constraints | Forward/backward chaining | Graph traversal, SPARQL, embeddings |
-| **Expressiveness** | Very high (FOL is very expressive) | Moderate (limited to graph relations) | Moderate (limited to predefined slots) | Low-moderate (specific rules only) | High (flexible triple format) |
-| **Scalability** | Poor (inference is expensive) | Poor (no standard, hard to integrate) | Poor (complex with many entities) | Poor (rule explosion at scale) | Excellent (web-scale, billions of triples) |
-| **Interpretability** | High (formal, auditable) | High (visual, intuitive) | High (structured, readable) | High (every rule is traceable) | Moderate (triples readable but paths long) |
-| **Uncertainty** | No (inherently crisp) | No (deterministic) | No (assumes completeness) | Limited (MYCIN adds confidence factors) | KG embeddings handle soft reasoning |
-| **Standardization** | Standard (FOL is universal) | No unified standard | No unified standard | Domain-specific | Standards-based (RDF, OWL) |
-| **Era** | 1950s--present | 1960s--1980s | 1970s--1980s | 1970s--1980s | 2000s--present |
-| **Example** | Prolog, theorem provers | Early AI research models | Object-oriented KBs | MYCIN, R1/XCON | Google KG, Wikidata |
+**WHAT:** Define both methods clearly (1-2 sentences each). State the representation format.
 
-### Differences Between KR Methods (from slides)
+**WHY:** Explain why multiple KR methods exist — different knowledge types need different containers. No single method satisfies all five requirements perfectly.
 
-| Method | Core Idea | Example |
-|---|---|---|
-| **Semantic Networks** | Knowledge as **connected concepts** | Bird → is-a → Animal |
-| **Frames** | Knowledge as **objects with attributes** | Frame: Bird; wings=2; can_fly=yes |
-| **Knowledge Graphs** | Knowledge as **entities and relations in triples** | (Bird, is_a, Animal) |
+**HOW:** Describe how each method stores and retrieves knowledge (graph traversal, slot lookup, rule firing, SPARQL query).
 
-**Key distinction (from slides):**
-- Semantic Network: Early graph-based KR using nodes and links. No unified standard. Small/domain-specific.
-- Knowledge Graph: A large-scale, **standardized** graph using **RDF triples**. Designed for web-scale.
-- KGs can be viewed as a **modern, large-scale implementation and extension** of the original Semantic Network concept.
+**TRADE-OFF:** Use a comparison table covering expressiveness, scalability, interpretability, and uncertainty handling.
 
-### When to Choose Which?
-
-| Scenario | Best Method | Rationale |
-|---|---|---|
-| Need precise mathematical proof | **Symbolic Logic** | Formal inference, verification |
-| Small domain, visual concept relationships | **Semantic Networks** | Intuitive, supports IS-A inheritance |
-| Describing entities with structured attributes | **Frames** | Slot-filler structure, default values |
-| Well-defined decision process, explainable | **Rule-Based System** | Transparent IF-THEN rules, no training data |
-| Web-scale fact retrieval, millions of entities | **Knowledge Graph** | Scalable, standardized (RDF), supports embeddings |
-| Combining multiple approaches | **Hybrid** | Real systems often combine ontology (schema) + KG (facts) + rules (decisions) |
-
-### KR Landscape (from slides)
-
-```
-                Knowledge Representation
-                         │
-          ┌──────────────┼──────────────┐
-     Logic-based     Graph-based    Structured/Rule-based
-          │           │       │           │          │
-    Symbolic     Semantic   Knowledge   Frames   Rule-based
-     Logic      Networks    Graphs               Systems
-```
-
-**Key takeaway from slides:** "There is **no single best KR method**. Different methods have different strengths in representation, inference, scalability, and interpretability. In practice, AI systems may combine multiple KR methods to solve real-world problems."
+**EXAMPLE:** Give a concrete scenario for each.
+- Symbolic Logic: encoding traffic laws for autonomous vehicles
+- Semantic Network: representing an animal taxonomy
+- Frame: representing a hotel booking system
+- Rule-Based: medical diagnosis (MYCIN)
+- Knowledge Graph: Google's search knowledge panel
+- Ontology: defining valid relationships in a medical database
 
 ---
 
-## 🏗️ 设计题答题框架
+## 📝 Past Paper Connections
 
-**Prompt type:** "Compare different KR methods and explain which you would choose for [scenario]. Justify your choice."
+KR methods are rarely asked as standalone questions, but they appear as **background knowledge** in:
 
-### WHAT
-Identify which KR methods are relevant:
-- "For this scenario, I would compare **Semantic Networks**, **Frames**, **Rule-Based Systems**, and **Knowledge Graphs** as candidate approaches..."
-- "The primary representation would be a **Knowledge Graph** with an **ontology** providing the schema..."
-
-### WHY
-Justify based on the 5 KR requirements:
-- **Expressiveness**: "A KG can represent diverse entity types and relationship types via flexible triples"
-- **Computational Efficiency**: "Rule-based systems offer fast decision-making via direct rule matching"
-- **Scalability**: "KGs scale to billions of triples; frames and rule-based systems do not"
-- **Interpretability**: "Rule-based systems are the most transparent -- every conclusion traces to a human-readable rule"
-- **Modifiability**: "KGs can be updated by adding new triples without restructuring the entire system"
-
-### HOW
-Describe the architecture:
-1. Choose the primary KR method and explain its structure
-2. Show how knowledge is stored (e.g., as triples, as frames, as rules)
-3. Explain how inference works (e.g., graph traversal, property inheritance, forward chaining)
-
-### TRADE-OFF
-Discuss what you sacrifice:
-- "Semantic Networks are intuitive but lack standardization and cannot handle uncertainty"
-- "Rule-Based Systems are transparent but brittle and hard to scale beyond ~10K rules"
-- "Frames are structured but rigid and cannot reason with probabilities"
-- "KGs are scalable but may be incomplete and require maintenance"
-
-### EXAMPLE
-Walk through a concrete scenario:
-- "A medical AI receives symptom data. Using a KG: (Patient, hasSymptom, Fever), (Patient, hasSymptom, Cough). Graph traversal finds: (Flu, hasSymptom, Fever), (Flu, hasSymptom, Cough). Match! Suggest Flu as possible diagnosis."
+1. **KG questions** — "What is a Knowledge Graph?" requires understanding that it evolved from Semantic Networks *(see [Knowledge Graphs chapter](./D_knowledge_graphs.md))*
+2. **Expert System questions** — "Explain how MYCIN works" requires understanding Rule-Based Systems and forward/backward chaining *(see [Expert Systems chapter](./E_mycin.md))*
+3. **Comparison questions** — "Compare Semantic Networks and Knowledge Graphs" *(Lec 5)*
+4. **Ontology questions** — "What is the role of an ontology in a knowledge-based system?"
 
 ---
 
-## 📝 历年真题 + 课堂练习（Exercises 1--5 from Slides）
+## 🌐 English Expression Tips
 
-### Exercise 1 -- Structured vs Unstructured Knowledge
+### Describing KR methods
 
-> **Question:** Which of the following is an example of **structured** knowledge?
-> 
-> A) A collection of handwritten medical prescriptions.
-> B) A database storing customer purchase histories.
-> C) A video recording of a classroom lecture.
-> D) A set of research papers in PDF format.
+- "Knowledge Representation refers to the methods used to store, retrieve, and handle knowledge for intelligent reasoning."
+- "A Semantic Network represents knowledge as a graph, where nodes correspond to concepts and edges represent relationships."
+- "Frames are structured representations that use slot-filler pairs, similar to classes in object-oriented programming."
+- "An ontology defines the types of entities, their relationships, and the constraints governing those relationships."
 
-<details>
-<summary>Click to reveal answer</summary>
+### Comparing methods
 
-**Answer: B** -- A database storing customer purchase histories.
+- "While Semantic Networks represent knowledge graphically, Frames use a more structured, template-based approach."
+- "The fundamental difference between a Semantic Network and a Knowledge Graph lies in scale and standardization."
+- "Rule-Based Systems excel in domains with well-defined logic, whereas Knowledge Graphs are better suited for large-scale fact storage."
+- "Unlike a Knowledge Graph, which stores specific facts, an ontology defines the rules and constraints that those facts must follow."
 
-**Reasoning:** Structured knowledge is organized in a **predefined format** like databases, tables, or knowledge graphs. A database has rows, columns, and a schema -- this is structured. Handwritten prescriptions (A), video recordings (C), and PDF research papers (D) are all **unstructured** because they do not follow a predefined machine-readable format.
+### Explaining forward and backward chaining
 
-</details>
+- "Forward chaining is a data-driven approach: it starts with known facts and applies rules to derive new conclusions."
+- "Backward chaining is goal-driven: it starts with a hypothesis and works backward to find supporting evidence."
+- "The choice between forward and backward chaining depends on whether the task is exploratory (forward) or diagnostic (backward)."
 
----
-
-### Exercise 2 -- Semantic Network Inference
-
-> **Question:** Which of the following **best demonstrates inference** in a Semantic Network?
-> 
-> A) A chatbot randomly generating responses.
-> B) AI deducing that "whales are mammals" based on an "is-a" relationship.
-> C) A search engine ranking web pages based on popularity.
-> D) A neural network recognizing images of cats.
-
-<details>
-<summary>Click to reveal answer</summary>
-
-**Answer: B** -- AI deducing that "whales are mammals" based on an "is-a" relationship.
-
-**Detailed reasoning:**
-- **A incorrect:** A chatbot that **randomly generates responses** is not performing logical inference. In a Semantic Network, **inference relies on relationships between concepts**.
-- **B correct:** Semantic Networks allow AI to infer properties and relationships based on hierarchical connections (e.g., IS-A and HAS-PROPERTY). Deducing that whales are mammals via an IS-A relationship is exactly this kind of inference.
-- **C incorrect:** Search engines (like Google) rank web pages based on **user behavior** (e.g., clicks, backlinks, and SEO techniques), not by **inference** from a structured knowledge representation.
-- **D incorrect:** Neural networks process **unstructured data** (images, text, speech) through pattern recognition but do not inherently **infer new relationships** based on **existing symbolic knowledge**.
-
-</details>
-
----
-
-### Exercise 3 -- Frame-Based Reasoning (Healthcare)
-
-> **Scenario:** An AI-powered healthcare assistant uses **Frames** to manage patient medical records and suggest possible diagnoses.
-> 
-> Patient Alice reports: **fever** and **headache**.
->
-> | Frame: Patient | Slot | Filler |
-> |---|---|---|
-> | Alice | Age | 25 |
-> | | Symptoms | Fever, Headache |
-> | | Family History | None |
-> | | Recent Travel | Tropical regions (2 weeks ago) |
-> | | Vaccination History | No recent travel vaccines |
->
-> | Frame: Malaria | Slot | Filler |
-> |---|---|---|
-> | Malaria | Common Symptoms | Fever, Headache, Chills |
-> | | Transmission Risk | High in tropical regions |
-> | | Prevention | Vaccination |
->
-> **Question:** What is the most likely reason the AI flags **Malaria** as a potential diagnosis?
-> 
-> A) Alice has a family history of malaria.
-> B) Malaria is common in all patients with pain in the lungs.
-> C) Malaria is common in Age from 20 to 30.
-> D) Alice recently traveled to a high-risk area and shows matching symptoms.
-
-<details>
-<summary>Click to reveal answer</summary>
-
-**Answer: D** -- Alice recently traveled to a high-risk area and shows matching symptoms.
-
-**Reasoning:** Alice has **two key symptoms matching Malaria** (fever & headache); she traveled to a **malaria-prone region** two weeks ago (within incubation period); she has **not received a malaria vaccine**, increasing susceptibility. The frame system matches slots across the Patient frame and the Malaria frame to identify the overlap.
-
-- A is incorrect: Family History = None
-- B is incorrect: Alice has no lung pain symptoms
-- C is incorrect: There is no age-based rule in the Malaria frame
-
-</details>
-
----
-
-### Exercise 4 -- Rule-Based System (Fire Detection)
-
-> **Scenario:** Rule-Based AI system for **fire detection** in a smart building.
->
-> | Rule ID | IF Condition | THEN Conclusion |
-> |---|---|---|
-> | R1 | Temperature > 60C **AND** Smoke Detected | Trigger Fire Alarm |
-> | R2 | Temperature > 80C | Trigger Emergency Evacuation |
-> | R3 | Carbon Monoxide > Safe Limit | Alert Building Manager |
-> | R4 | Sprinklers Activated **AND** Smoke Detected | Confirm Fire |
->
-> **Current Sensor Readings:** Temperature = 85C, Smoke Detected = YES, Carbon Monoxide = Safe, Sprinklers Activated = NO
->
-> **Question:** What actions will the AI take?
-> 
-> A) Trigger Fire Alarm and Emergency Evacuation.
-> B) Only Alert the Building Manager.
-> C) Only Trigger the Fire Alarm.
-> D) Confirm Active Fire and Trigger Evacuation.
-
-<details>
-<summary>Click to reveal answer</summary>
-
-**Answer: A** -- Trigger Fire Alarm and Emergency Evacuation.
-
-**Reasoning (forward chaining):**
-1. **R1** fires: Temperature (85) > 60C ✅ AND Smoke Detected ✅ → **Fire Alarm** triggered
-2. **R2** fires: Temperature (85) > 80C ✅ → **Emergency Evacuation** triggered
-3. **R3** does NOT fire: Carbon Monoxide is at safe level ❌
-4. **R4** does NOT fire: Sprinklers are NOT activated ❌ (so AI cannot confirm active fire)
-
-**Final AI Actions:** Trigger Fire Alarm (R1) + Trigger Emergency Evacuation (R2)
-
-**Why not D?** R4 requires Sprinklers Activated = YES, but sprinklers are NOT activated, so fire cannot be confirmed.
-
-</details>
-
----
-
-### Exercise 5 -- Knowledge Graph Inference (Historical Figures)
-
-> **Scenario:** An AI system uses a Knowledge Graph for historical figures and scientific discoveries.
->
-> | Entity (Node) | Relation (Edge) | Entity (Node) |
-> |---|---|---|
-> | Isaac Newton | Discovered | Law of Gravity |
-> | Law of Gravity | Related To | Physics |
-> | Albert Einstein | Contributed To | Physics |
-> | Albert Einstein | Developed | Theory of Relativity |
-> | Theory of Relativity | Related To | Gravity |
-> | Theory of Relativity | Influenced By | Law of Gravity |
->
-> **Question:** Did Isaac Newton's discoveries influence Albert Einstein?
-> 
-> A) No, no direct link between Newton and Einstein.
-> B) Yes, Einstein contributed to Physics, and Physics includes Gravity.
-> C) Yes, Newton discovered Law of Gravity, and Theory of Relativity was influenced by it.
-> D) No, Einstein worked on different theories.
-
-<details>
-<summary>Click to reveal answer</summary>
-
-**Answer: C** -- Yes, because Newton discovered the Law of Gravity, and the Theory of Relativity was influenced by it.
-
-**Reasoning (graph traversal):**
-The graph does NOT directly connect Newton to Einstein, but AI can infer by **traversing** the graph:
-1. Newton → Discovered → Law of Gravity
-2. Law of Gravity → Influenced → Theory of Relativity
-3. Einstein → Developed → Theory of Relativity
-
-Therefore, Newton's discovery (Law of Gravity) influenced Einstein's work (Theory of Relativity).
-
-**Why not A?** While there is no *direct* edge between Newton and Einstein, KG inference works precisely by finding *indirect* paths through graph traversal.
-
-**Why not B?** Although technically true, this reasoning path is weaker -- the question asks about *influence*, and the direct influence path is through Law of Gravity → Theory of Relativity, not through the generic "Physics" node.
-
-</details>
-
----
-
-## 🌐 英语表达要点（English Expression）
-
-### Defining KR Methods
-
-```
-"Knowledge Representation refers to the methods used in AI to store,
- retrieve, and handle knowledge to enable intelligent reasoning."
-
-"A Semantic Network is a graph-based KR method where nodes represent
- concepts and edges represent relationships such as IS-A and HAS-PROPERTY."
-
-"A Frame is a structured representation that groups related information
- about an entity into a slot-filler structure, enabling inheritance
- and default reasoning."
-
-"A Rule-Based System encodes domain knowledge as a set of IF-THEN
- production rules, providing transparent and explainable decision-making."
-
-"A Knowledge Graph is a graph-based representation that connects
- entities (nodes) with relationships (edges), storing facts as
- RDF triples in the form (Subject, Predicate, Object)."
-```
-
-### Comparing Methods
-
-```
-"While Semantic Networks represent knowledge as interconnected concept
- nodes, Knowledge Graphs use standardized RDF triples and are designed
- for web-scale applications with billions of facts."
-
-"Unlike Rule-Based Systems, which require manually crafted IF-THEN rules,
- Knowledge Graphs can be populated semi-automatically using NLP techniques
- such as Named Entity Recognition and Relation Extraction."
-
-"Frames organize knowledge similarly to objects in programming, with
- slots (attributes) and fillers (values), whereas Semantic Networks
- focus on the relationships between concepts rather than their attributes."
-
-"The fundamental trade-off between Rule-Based Systems and Knowledge Graphs
- is interpretability versus scalability: rules are transparent but brittle
- at scale, while KGs scale to billions of facts but paths can be opaque."
-```
-
-### Discussing Requirements
-
-```
-"A good KR system must balance five requirements: expressiveness,
- computational efficiency, scalability, interpretability, and modifiability."
-
-"The choice of KR method depends on the application's priorities --
- for example, medical diagnosis systems prioritize interpretability,
- while web search engines prioritize scalability."
-```
-
-### 易错词汇
+### Commonly confused terms
 
 | Confused Pair | Distinction |
 |---|---|
-| **Semantic Network** vs **Knowledge Graph** | Semantic Network: early, no standard, small-scale. KG: modern, standardized (RDF), web-scale |
-| **Frame** vs **Object (OOP)** | Frames are KR structures for AI reasoning with inheritance and defaults; OOP objects are programming constructs |
-| **Slot** vs **Property** vs **Attribute** | In frames: slot = attribute = property. In KGs: property = attribute of an entity or relation |
-| **Structured** vs **Unstructured** | Structured = predefined schema (databases, KGs). Unstructured = no schema (text, images) |
-| **Inference** vs **Retrieval** | Inference = derive NEW knowledge from existing facts. Retrieval = find existing stored facts |
-| **Forward chaining** vs **Backward chaining** | Forward = data → conclusion (what can I infer?). Backward = goal → evidence (is this true?) |
+| Semantic Network vs Knowledge Graph | KG = standardized (RDF triples) + large scale; SN = informal graph, small scale |
+| Frame vs Ontology | Frame = data structure for one concept; Ontology = formal schema for an entire domain |
+| Rule vs Implication | Rule = IF-THEN in a system; Implication = logical connective (→) in propositional logic |
+| Knowledge Graph vs Ontology | KG = stores facts (data); Ontology = defines rules/schema (structure) |
+| Forward vs Backward Chaining | Forward = data → conclusions; Backward = goal → evidence |
 
 ---
 
-## ✅ 自测检查清单
+## 📝 Practice Problems
 
-- [ ] Can I define Knowledge Representation and its purpose in one sentence?
-- [ ] Can I list and explain the 5 key requirements of KR (Expressiveness, Computational Efficiency, Scalability, Interpretability, Modifiability)?
-- [ ] Can I explain the difference between Structured and Unstructured Knowledge with examples?
-- [ ] Can I describe how Symbolic Logic (PL + FOL) is used in KR?
-- [ ] Can I draw a Semantic Network and explain IS-A inference and property inheritance?
-- [ ] Can I name 3 strengths and 3 weaknesses of Semantic Networks?
-- [ ] Can I describe a Frame with its slots and fillers, and explain the 4 reasoning mechanisms (defaults, inheritance, constraints, procedural attachment)?
-- [ ] Can I name 4 strengths and 4 weaknesses of Frames?
-- [ ] Can I write an IF-THEN rule and trace forward chaining through a set of rules?
-- [ ] Can I name 3 strengths and 3 weaknesses of Rule-Based Systems?
-- [ ] Can I explain Knowledge Graph structure (nodes, edges, properties) and write RDF triples?
-- [ ] Can I name the 4 types of KG inference (transitive, relationship expansion, entity disambiguation, QA)?
-- [ ] Can I name 4 strengths and 2 weaknesses of Knowledge Graphs?
-- [ ] Can I compare all five KR methods in a table (core idea, representation, reasoning, strengths, weaknesses)?
-- [ ] Can I explain the KR Landscape diagram showing logic-based, graph-based, and structured/rule-based categories?
-- [ ] Can I solve all 5 exercises from the lecture slides?
+### Problem 1: Choosing the right KR method
+
+**Question:** Which KR method would be best for a medical diagnosis system that needs to explain its reasoning to doctors? Justify your choice with reference to the five KR requirements. (5 marks)
+
+**Answer Framework:**
+
+The best choice is a **Rule-Based System**, potentially combined with an **Ontology**.
+
+- **Expressiveness**: IF-THEN rules can capture diagnostic logic ("IF fever AND cough AND duration > 7 days THEN suspect pneumonia"). An ontology ensures only valid medical relationships are used.
+- **Interpretability**: This is the critical requirement. Doctors need to understand WHY the system made a diagnosis. Rule-based systems provide full transparency — you can trace exactly which rules fired. This is far superior to a black-box approach.
+- **Modifiability**: Medical knowledge updates frequently (new diseases, new treatments). Rules can be added or modified individually without rewriting the entire system.
+- **Computational Efficiency**: For a clinical setting, rule-based systems are fast enough — diagnosis does not require processing billions of facts.
+- **Scalability**: This is the weakness. As the number of rules grows, the system becomes harder to manage. For a specialized domain (e.g., bacterial infections only, like MYCIN), this is acceptable.
+
+**Why not other methods?**
+- KG: great for storing medical facts but does not provide transparent reasoning chains
+- Semantic Network: too informal for medical precision
+- Pure symbolic logic: too rigid and hard for doctors to read/write
 
 ---
 
-> **Cross-references:**
-> - For Symbolic Logic in depth, see [Propositional Logic & FOL chapter](./A_symbolic_logic.md)
-> - For Knowledge Graphs, TransE, and RAG in depth, see [KG for AI chapter](./D_knowledge_graphs.md)
-> - For Expert Systems and MYCIN, see [MYCIN chapter](./E_mycin.md)
+### Problem 2: Drawing a semantic network
+
+**Question:** Draw a semantic network for the following facts: Dogs are mammals. Mammals are animals. Dogs have fur. Dogs can bark. Animals need food. What can you infer about dogs through property inheritance? (4 marks)
+
+**Answer:**
+
+```
+         Animal ----has-property----> Needs-Food
+            ^
+            | is-a
+            |
+         Mammal
+            ^
+            | is-a
+            |
+           Dog ----has-property----> Fur
+            |
+            +------has-property----> Can-Bark
+```
+
+**Inferences through property inheritance:**
+1. Dog **is-a** Mammal **is-a** Animal → Dog is an Animal (transitive is-a)
+2. Animal **has-property** Needs-Food → Dog inherits Needs-Food
+
+So without being told directly, the system can infer: **Dog needs food**.
+
+---
+
+### Problem 3: Knowledge Graph vs Ontology
+
+**Question:** What is the difference between a Knowledge Graph and an Ontology? Give an example of each and explain how they work together. (4 marks)
+
+**Answer Framework:**
+
+A **Knowledge Graph** stores specific facts about the world as RDF triples:
+- (Aspirin, treats, Headache)
+- (Penicillin, treats, Infection)
+
+An **Ontology** defines the rules and constraints governing what kinds of facts are valid:
+- "Only entities of type Medicine can have a 'treats' relationship with entities of type Disease"
+- "Medicine is a subclass of Substance"
+
+**How they work together:**
+- The ontology defines the **schema**: what types of entities exist and what relationships are allowed
+- The KG stores the **data**: specific instances following that schema
+- When a new triple is added, the ontology can **validate** it: (Dr. Smith, treats, Headache) would be rejected because Dr. Smith is a Doctor, not a Medicine
+
+**Analogy:** The ontology is like the column headers and validation rules of a spreadsheet. The KG is the actual data in the rows.
+
+---
+
+### Problem 4: Property inheritance with exceptions
+
+**Question:** Consider a semantic network where Bird has-property Can-Fly. Penguin is-a Bird. But penguins cannot fly. How would you handle this using (a) a semantic network and (b) a frame? Which approach handles it better? (4 marks)
+
+**Answer Framework:**
+
+**(a) Semantic Network approach:**
+
+```
+   Bird ----has-property----> Can-Fly
+     ^
+     | is-a
+     |
+  Penguin ----has-property----> Cannot-Fly   (contradicts inherited Can-Fly!)
+```
+
+Problem: the network now has a **contradiction**. Penguin inherits Can-Fly from Bird but also has its own Cannot-Fly. The semantic network has no built-in mechanism to resolve this conflict. You would need an additional rule like "local properties override inherited properties," but this is not part of the standard semantic network formalism.
+
+**(b) Frame approach:**
+
+```
+Frame: Bird
+  Slot: can-fly     Filler: True (default)
+  Slot: has-wings   Filler: True
+  Slot: legs        Filler: 2
+
+Frame: Penguin (inherits from Bird)
+  Slot: can-fly     Filler: False    ← cleanly overrides the default
+  Slot: habitat     Filler: Antarctic
+```
+
+The frame approach handles this **much more cleanly**. Default values can be overridden in child frames, just like method overriding in OOP. There is no contradiction — the local value simply takes precedence over the inherited default.
+
+**Conclusion:** Frames handle exceptions better than semantic networks because they have a built-in mechanism for default values with overrides.
+
+---
+
+### Problem 5: Forward vs Backward Chaining
+
+**Question:** Given the following rules and facts, show how forward chaining and backward chaining would each reach a conclusion. (4 marks)
+
+```
+Rules:
+R1: IF fever AND cough THEN flu
+R2: IF flu AND bodyache THEN severe-flu
+R3: IF severe-flu THEN hospitalize
+
+Facts: {fever, cough, bodyache}
+```
+
+**Forward Chaining (data → conclusions):**
+
+```
+Start: {fever, cough, bodyache}
+Step 1: R1 matches (fever ∧ cough) → add flu       → {fever, cough, bodyache, flu}
+Step 2: R2 matches (flu ∧ bodyache) → add severe-flu → {fever, cough, bodyache, flu, severe-flu}
+Step 3: R3 matches (severe-flu) → add hospitalize    → {fever, cough, bodyache, flu, severe-flu, hospitalize}
+Step 4: No more rules match → DONE
+```
+
+**Backward Chaining (goal → evidence):**
+
+```
+Goal: Should we hospitalize?
+Step 1: R3 says hospitalize requires severe-flu → Sub-goal: prove severe-flu
+Step 2: R2 says severe-flu requires flu AND bodyache → Sub-goals: prove flu, prove bodyache
+Step 3: R1 says flu requires fever AND cough → Sub-goals: prove fever, prove cough
+Step 4: fever ∈ Facts ✓, cough ∈ Facts ✓ → flu PROVED
+Step 5: bodyache ∈ Facts ✓ → severe-flu PROVED
+Step 6: → hospitalize PROVED ✓
+```
+
+Both approaches reach the same conclusion, but forward chaining explores all derivable facts while backward chaining is more focused — it only checks what is needed for the specific goal.
+
+---
+
+## ✅ Self-Check Checklist
+
+- [ ] Can you name and briefly define all six KR methods (logic, semantic networks, frames, rules, KGs, ontologies)?
+- [ ] Can you draw a semantic network with is-a and has-property edges?
+- [ ] Can you explain property inheritance with a concrete example?
+- [ ] Can you describe a frame with slots, fillers, and default values?
+- [ ] Can you list the five requirements for a good KR system?
+- [ ] Can you explain forward chaining vs backward chaining with an example?
+- [ ] Can you state the key difference between a Knowledge Graph and an Ontology?
+- [ ] Can you explain why semantic networks struggle with exceptions (the penguin problem)?
+- [ ] Can you explain what structured vs unstructured knowledge means?
+- [ ] Can you write all of the above in English under exam conditions?
+
+---
+
+⚠️ **Common Misconception:** Students often think Semantic Networks and Knowledge Graphs are the same thing. They share the graph structure, but KGs use **standardized triple format (RDF)**, operate at **much larger scale**, and support **embedding-based reasoning** (TransE, etc.) — none of which traditional Semantic Networks do.
+
+⚠️ **Common Misconception:** Students often conflate Knowledge Graphs and Ontologies. Remember: a KG stores **facts** (data), while an ontology defines **rules and constraints** (schema). They complement each other but serve different purposes.
+
+💡 **Core Intuition:** Knowledge Representation is the art of choosing the right container for knowledge. Logic gives precision, networks give intuition, frames give structure, rules give transparency, KGs give scale, and ontologies give validation. No single method does everything — real systems combine multiple approaches.

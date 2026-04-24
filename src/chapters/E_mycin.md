@@ -1,915 +1,554 @@
-# MYCIN Expert System — Deep Dive (W4L1)
+# MYCIN, Expert Systems & Forward/Backward Chaining
 
-## 🎯 考试重要度
-🟡 **中频 — 但正式考试很可能出现** | 整个 W4L1 专门讲 MYCIN，CF 计算是极易出计算题的考点
+## Exam Priority
 
-> MYCIN did not appear in some sample tests, but an entire lecture was devoted to it. Confidence Factor calculations are **extremely testable** as short numerical questions. Backward chaining reasoning is a favourite topic for "explain with an example" questions. **S1 2025 Sample Q6 (3 marks)** directly tests backward chaining for medical diagnosis.
+**Medium frequency** | Appeared directly in 1/4 past tests (2025 Sample Q6, backward chaining, 3 marks) | Forward/backward chaining is a fundamental reasoning concept that underpins many AI systems | Typically worth 3 marks
 
 ---
 
-## 📖 核心概念（Core Concepts）
+## Let's Start From Scratch
 
-| English Term | 中文 | One-line Definition |
+### What Is an Expert System?
+
+Before machine learning existed, people still wanted computers to make smart decisions. The idea was simple: find a human expert (say, a doctor who has diagnosed thousands of infections), sit down with them, extract every rule they use, and code those rules into a program.
+
+That program is an **expert system**. It does not learn from data. It reasons from rules that a human gave it.
+
+MYCIN was one of the first and most famous. Built at Stanford in the 1970s by Ted Shortliffe, it diagnosed bacterial blood infections. And here is the remarkable thing: in blind tests, MYCIN's diagnoses were as good as or better than many human physicians. But it was never deployed clinically — partly because doctors did not trust a machine, and partly because of legal liability issues. Still, the ideas it introduced shaped AI for decades.
+
+### The Four Components You Must Know
+
+Think of MYCIN as a detective agency with four departments:
+
+| Component | What It Does | The Detective Analogy |
 |---|---|---|
-| MYCIN | MYCIN 专家系统 | A rule-based expert system built by **Ted Shortliffe at Stanford (1970s)** to diagnose bacterial infections and recommend antibiotics |
-| Production Rule（产生式规则） | 产生式规则 | An IF-THEN rule with a confidence factor: IF premises THEN conclusion WITH CF |
-| Backward Chaining（后向链接） | 后向链接 / 目标驱动推理 | Goal-driven inference: start from a hypothesis and work backward to find supporting evidence |
-| Forward Chaining（前向链接） | 前向链接 / 数据驱动推理 | Data-driven inference: start from known facts and fire rules to derive new conclusions (Modus Ponens) |
-| Confidence Factor (CF)（置信因子） | 置信因子 | A numerical measure of certainty ranging from -1.0 (definitely false) to +1.0 (definitely true) |
-| Knowledge Base (KB)（知识库） | 知识库 | The collection of 450+ IF-THEN production rules encoding medical expertise (persistent, long-term memory) |
-| Dynamic Data / Working Memory（动态数据） | 工作记忆 | Current known facts about the patient being diagnosed (per-case, short-term) |
-| Inference Engine（推理引擎） | 推理引擎 | The reasoning component that applies backward chaining over the rule base; contains MONITOR + FINDOUT |
-| MONITOR（监控操作） | 监控 | Check if a fact is already present in working memory |
-| FINDOUT（查询操作） | 查询 | Ask the user (clinician) to supply a missing piece of information |
-| Consultation System（咨询系统） | 咨询子程序 | Subprogram 1: conducts the diagnostic dialogue with the clinician |
-| Explanation System（解释系统） | 解释子程序 | Subprogram 2: handles WHY and HOW queries |
-| Rule-Acquisition System（规则获取系统） | 规则获取子程序 | Subprogram 3: allows experts to add/modify rules in the knowledge base |
-| WHY Query（WHY 查询） | WHY 查询 | User asks "Why are you asking me this?" — system reveals its current reasoning goal (backward chaining style) |
-| HOW Query（HOW 查询） | HOW 查询 | User asks "How did you reach that conclusion?" — system shows the rule chain (forward chaining style) |
-| E-MYCIN (Essential MYCIN) | 通用 MYCIN 外壳 | Domain-independent expert system shell — MYCIN with medical knowledge removed; the **first expert system shell** |
-| Knowledge Acquisition Bottleneck（知识获取瓶颈） | 知识获取瓶颈 | The fundamental difficulty of extracting and encoding expert knowledge into rules |
-| Modus Ponens（肯定前件式） | 肯定前件推理 | Logical rule: IF A is true AND A implies B, THEN B is true |
-| LISP | LISP 语言 | The programming language MYCIN was implemented in; uses prefix notation |
+| **Knowledge Base** | ~200 IF-THEN rules with confidence factors | The case-law handbook — "if fingerprints match AND window is broken, suspect burglary (confidence 0.8)" |
+| **Inference Engine** | Takes facts and rules, chains them together to reach conclusions | The detective doing the actual reasoning — connecting clues to suspects |
+| **Explanation System** | Answers WHY and HOW queries | The detective explaining their reasoning to the jury |
+| **User Interface** | Asks the doctor questions, presents conclusions | The detective interviewing witnesses |
+
+There is also a **Working Memory** (the facts known about the current patient — like the detective's notepad for *this specific case*) and a **Rule-Acquisition System** (for adding new rules — like updating the handbook with new case law).
+
+The critical insight: the Knowledge Base and the Inference Engine are **separate**. The rules are data, not code. This means you can swap out the medical rules for, say, geology rules, and the same inference engine works. This led to **E-MYCIN** (Empty MYCIN) — the first expert system shell. More on that later.
 
 ---
 
-## 🧠 费曼草稿（Feynman Draft）
+## Production Rules & Confidence Factors
 
-![MYCIN CF chain calculation + forward vs backward chaining](./figures/10_mycin_cf.png)
+### The Rule Format
 
-### The Junior Doctor with a Giant Manual
-
-Imagine a **brand-new doctor** on their first day in the hospital. They have zero experience but someone hands them a thick manual -- 450 pages of rules written by the best infectious disease specialist in the country. Each page says something like:
-
-> "IF the patient's culture shows gram-negative organisms AND the organism has rod morphology AND the organism is anaerobic, THEN the organism is Bacteroides (I'm about 60% sure)."
-
-The junior doctor doesn't think creatively. They just follow the manual **backwards**: they start with a question ("What is causing this infection?"), look up which rules could answer it, then check whether they already know the required facts. If they don't know something, they either look it up in the patient's chart or ask the patient directly.
-
-That's MYCIN. It's not intelligent in the human sense -- it's a **systematic rule-follower** with a clever strategy for deciding what to ask.
-
-### The Manual is Written in a Weird Language
-
-MYCIN was built in **LISP** -- a programming language where everything is written in prefix notation（前缀表示法）with lots of parentheses:
-
-```lisp
-;; Instead of 2 + 3, you write:
-(+ 2 3)          ; → 5
-
-;; Key LISP operations MYCIN uses:
-(cons 'a '(b c)) ; → (a b c)   -- prepend an element to a list
-(list 'a 'b 'c)  ; → (a b c)   -- create a list
-(setq x 5)       ; → x is now 5 -- assign a value to a variable
-(eval '(+ 2 3))  ; → 5         -- evaluate an expression
-```
-
-You don't need to write LISP for the exam, but you should know MYCIN was implemented in LISP and understand prefix notation if given an example.
-
-### How Does the Junior Doctor Actually Work?
-
-Let's walk through a tiny example. Suppose MYCIN's knowledge base has just three rules:
+Every rule in MYCIN looks like this:
 
 ```
-Rule 1: IF infection is primary-bacteremia
-        AND culture-site is sterile-site
-        THEN organism is E.coli  (CF = 0.8)
-
-Rule 2: IF organism is E.coli
-        THEN recommend drug Ampicillin  (CF = 0.9)
-
-Rule 3: IF infection is primary-bacteremia
-        AND patient-age > 60
-        THEN organism is Klebsiella  (CF = 0.6)
+IF   condition_1 AND condition_2 AND condition_3
+THEN conclusion  (CF = confidence factor)
 ```
 
-**Goal**: "What drug should I recommend?"
-
-**Step 1** -- MYCIN looks for rules whose THEN part mentions a drug recommendation. It finds **Rule 2** (recommend Ampicillin if E.coli). But Rule 2 needs to know the organism. Is it E.coli? Unknown. So "organism is E.coli" becomes a **sub-goal**.
-
-**Step 2** -- Now MYCIN searches for rules whose THEN part concludes about the organism. It finds **Rule 1**. Rule 1 needs two things: (a) infection type and (b) culture site. MYCIN checks working memory (**MONITOR**). If unknown, it asks the clinician (**FINDOUT**): "What is the infection type?" The doctor answers: "primary-bacteremia (CF = 1.0)." "What is the culture site?" Answer: "sterile-site (CF = 0.9)."
-
-**Step 3** -- Now Rule 1 can fire:
-- CF(premise) = min(1.0, 0.9) = 0.9 (because AND takes the minimum)
-- CF(E.coli) = 0.9 x 0.8 = **0.72**
-
-**Step 4** -- Rule 2 can now fire:
-- CF(Ampicillin) = 0.72 x 0.9 = **0.648**
-
-MYCIN would report: "I recommend Ampicillin with confidence 0.648."
-
-This is **backward chaining** -- we started from the goal and worked backwards through the rule chain, only asking questions that were actually needed.
-
-### When Does MYCIN Give Up?
-
-MYCIN is smart about not wasting time. It **abandons a hypothesis when CF drops below 0.2**. Here's a concrete example of CF propagation down a chain:
+Here is a real MYCIN rule:
 
 ```
-Starting hypothesis CF = 0.5
-  → Apply Rule (CF_rule = 0.6):
-    CF(condition1) = 0.5 x 0.6 = 0.30     (still above 0.2, keep going)
-  → Apply next Rule (CF_rule = 0.6):
-    CF(condition2) = 0.30 x 0.6 = 0.18    (below 0.2 → ABANDON this path!)
+IF   stain       = gram-negative
+AND  morphology  = rod
+AND  aerobicity  = anaerobic
+THEN identity    = Bacteroides  (CF = 0.6)
 ```
 
-This is efficient: rather than chasing every possible chain of reasoning, MYCIN prunes away paths where confidence has become too low to be useful.
+Translation: "If the bacteria stains gram-negative, is rod-shaped, and cannot survive in oxygen, then it is probably Bacteroides, and I am 60% confident in this rule."
 
-### What if Two Rules Support the Same Conclusion?
+### What Is a Confidence Factor?
 
-Suppose Rule 1 gives CF(E.coli) = 0.72 and another Rule 4 also concludes E.coli with CF = 0.5. We combine them:
+A CF is a number between -1 and 1. It is NOT a probability — this is a common exam mistake. It represents the degree of belief:
 
-$$CF_{combined} = 0.72 + 0.5 \times (1 - 0.72) = 0.72 + 0.14 = 0.86$$
+- CF = 1.0 means "I am completely certain this is true"
+- CF = 0.0 means "I have no opinion"
+- CF = -1.0 means "I am completely certain this is false"
 
-Two independent pieces of evidence **reinforce** each other. Notice the combined CF is higher than either alone, but never reaches 1.0 from two uncertain pieces -- that makes intuitive sense!
+In practice, most CFs are between 0 and 1 for positive evidence.
+
+### The Two CF Formulas You Must Know
+
+**Formula 1 — Combining premise with rule:**
+
+\\[
+\text{CF}(\text{conclusion}) = \text{CF}(\text{premise}) \times \text{CF}(\text{rule})
+\\]
+
+This makes intuitive sense: if you are not very sure about your evidence, AND the rule itself is not very strong, then you should be even less sure about the conclusion.
+
+**Formula 2 — CF of a conjunctive premise (AND):**
+
+\\[
+\text{CF}(A \land B \land C) = \min\bigl(\text{CF}(A),\; \text{CF}(B),\; \text{CF}(C)\bigr)
+\\]
+
+This also makes intuitive sense: a chain is only as strong as its weakest link. If you are very sure about two conditions but uncertain about the third, your overall premise confidence is limited by that weakest condition.
+
+### Worked Example — Follow This Carefully
+
+Let's say we have these facts about a patient's blood sample:
+
+```
+CF(stain = gram-negative)  = 0.8   (lab is pretty sure)
+CF(morphology = rod)       = 0.9   (lab is quite sure)
+CF(aerobicity = anaerobic) = 0.7   (lab is somewhat sure)
+```
+
+And the rule says: IF all three THEN Bacteroides (CF = 0.6)
+
+**Step 1: Compute the premise CF using min():**
+
+```
+CF(premise) = min(0.8, 0.9, 0.7) = 0.7
+```
+
+The weakest link is 0.7 (the anaerobic observation), so the premise confidence is 0.7.
+
+**Step 2: Multiply by the rule CF:**
+
+```
+CF(conclusion) = CF(premise) × CF(rule) = 0.7 × 0.6 = 0.42
+```
+
+The system is only 42% confident that this is Bacteroides. Why so low? Because the weakest evidence (0.7) AND the rule itself (only 0.6 confidence) both drag it down.
+
+### Another Worked Example — Stronger Evidence
+
+Same rule, but better lab results:
+
+```
+CF(stain = gram-negative)  = 1.0   (absolutely certain)
+CF(morphology = rod)       = 1.0   (absolutely certain)
+CF(aerobicity = anaerobic) = 1.0   (absolutely certain)
+```
+
+```
+CF(premise) = min(1.0, 1.0, 1.0) = 1.0
+CF(conclusion) = 1.0 × 0.6 = 0.6
+```
+
+Even with perfect evidence, you can never get above 0.6 because the rule itself only has CF = 0.6. The rule encodes the fact that even when all three conditions are met, there is still a 40% chance it is not Bacteroides.
+
+> **Common Misconception:** Students sometimes multiply all the CFs together: 0.8 × 0.9 × 0.7 × 0.6. This is WRONG. You use **min()** for the AND conditions, then multiply by the rule CF. Do not confuse these two operations.
 
 ---
 
-⚠️ **Common Misconception 1**: Students often **multiply CFs** when combining multiple rules for the same conclusion. That's WRONG. **Multiplication** is for **chaining** rules in sequence (premise CF x rule CF). The special **combination formula** $CF_1 + CF_2(1 - CF_1)$ is for when two **different rules both support the same conclusion**.
+## Forward vs Backward Chaining — The Core of This Chapter
 
-⚠️ **Common Misconception 2**: Students confuse AND (take the **minimum**) with OR (take the **maximum**). Think of it this way -- a chain is only as strong as its weakest link (AND = min), but you only need one good reason (OR = max).
+This is the topic that actually gets tested. Let me teach it to you properly.
 
-⚠️ **Common Misconception 3**: "IF A THEN B" does **NOT** mean A is the **only** cause of B. Multiple rules can conclude B from different premises. Backward chaining identifies **possible necessary conditions**, not unique ones.
+### The Setup
+
+Imagine you have a set of rules and a set of known facts. The question is: **in what direction do you reason?**
+
+There are exactly two directions, and they are opposites.
+
+### Forward Chaining (Data-Driven)
+
+**The metaphor:** You are a detective who arrives at a crime scene. You walk around, collect every clue you can find, then go back to the station and flip through your rulebook to see what conclusions you can draw.
+
+**The logic:** You start with what you KNOW and push forward to what you can CONCLUDE.
+
+**The formal basis:** Modus Ponens — if \\(P\\) is true and \\(P \to Q\\), then \\(Q\\) is true.
+
+**The condition type:** A is **sufficient** for B. Meaning: if A is true, that is enough to conclude B.
+
+**The connection to MYCIN:** Forward chaining relates to **HOW queries** — "How did you conclude X?" The system traces forward from facts to conclusion.
+
+Let me walk through an example:
+
+```
+Rules:
+  R1: IF runny_nose AND rash THEN measles
+  R2: IF runny_nose THEN common_cold
+  R3: IF runny_nose AND history_of_allergies THEN allergies
+
+Known facts: {runny_nose, rash}
+
+Forward chaining process:
+  Step 1: Look at facts: runny_nose, rash
+  Step 2: Check R1: runny_nose (YES) AND rash (YES) → fire! Conclude: measles
+  Step 3: Check R2: runny_nose (YES) → fire! Conclude: common_cold
+  Step 4: Check R3: runny_nose (YES) AND history_of_allergies (NO) → cannot fire
+  
+  Result: {measles, common_cold} are derived
+```
+
+Notice: forward chaining fires EVERY rule whose conditions are met. It might derive things you did not ask about. It is exhaustive but can be inefficient.
+
+### Backward Chaining (Goal-Driven)
+
+**The metaphor:** Your boss calls and says "Was this a burglary?" Now you have a specific **goal** to investigate. You look up your rulebook: "To confirm burglary, I need evidence of forced entry AND missing valuables." So you go to the crime scene specifically looking for those two things. If you find one but not the other, you ask the homeowner.
+
+**The logic:** You start with what you WANT TO PROVE and work backward to find the evidence you NEED.
+
+**The condition type:** B is **necessary** for proving A — but NOT necessarily the ONLY way to prove A.
+
+**The connection to MYCIN:** Backward chaining relates to **WHY queries** — "Why are you asking me about rash?" Because the system is trying to prove/disprove measles, and rash is needed for that.
+
+**MYCIN uses backward chaining as its primary reasoning strategy.** It starts with hypotheses about possible infections and works backward to find the evidence.
+
+Let me walk through the same example, but backward:
+
+```
+Rules:
+  R1: IF runny_nose AND rash THEN measles
+  R2: IF runny_nose THEN common_cold
+  R3: IF runny_nose AND history_of_allergies THEN allergies
+
+Known facts: {runny_nose}
+
+Backward chaining — Goal: "Does the patient have common cold?"
+  Step 1: Goal = common_cold
+  Step 2: Which rule concludes common_cold? R2.
+  Step 3: R2 needs: runny_nose. Does patient have it? YES.
+  Step 4: Rule fires → common_cold is SUPPORTED.
+
+Backward chaining — Goal: "Does the patient have measles?"
+  Step 1: Goal = measles
+  Step 2: Which rule concludes measles? R1.
+  Step 3: R1 needs: runny_nose AND rash.
+  Step 4: runny_nose? YES. rash? UNKNOWN.
+  Step 5: System asks the doctor: "Does the patient have a rash?"
+  Step 6: If YES → measles is SUPPORTED. If NO → measles is NOT SUPPORTED.
+
+Backward chaining — Goal: "Does the patient have allergies?"
+  Step 1: Goal = allergies
+  Step 2: Which rule concludes allergies? R3.
+  Step 3: R3 needs: runny_nose AND history_of_allergies.
+  Step 4: runny_nose? YES. history_of_allergies? UNKNOWN.
+  Step 5: System asks: "Does the patient have a history of allergies?"
+```
+
+See how backward chaining is focused? It only asks about what it needs. It does not wander around collecting random facts.
+
+### The Comparison Table
+
+| Aspect | Forward Chaining | Backward Chaining |
+|---|---|---|
+| Starting point | Known facts | Hypothesis / goal |
+| Direction | Facts → Conclusions | Goal → What evidence do I need? |
+| Logic basis | Modus Ponens | Goal reduction |
+| Condition type | A is SUFFICIENT for B | A is NECESSARY for B (but not unique) |
+| MYCIN query type | HOW ("How did you conclude X?") | WHY ("Why are you asking about X?") |
+| When to use | Lots of data, want to explore all conclusions | Specific hypothesis to test |
+| Efficiency | May derive irrelevant conclusions | Focused — only explores what is needed |
+| Analogy | Collect all clues, then deduce | Boss asks a question, go find specific proof |
+
+### The Critical Nuance — Backward Chaining Does NOT Prove Uniqueness
+
+This is the single most important subtlety, and it costs marks if you miss it.
+
+When backward chaining finds that "runny nose supports common cold," that does NOT mean runny nose can ONLY be caused by a common cold. The same runny nose also supports allergies and measles. Backward chaining finds **possible** support for a hypothesis. It does not prove the hypothesis is the only explanation.
+
+In formal terms:
+
+```
+IF A THEN B
+```
+
+- **Forward reading:** A is SUFFICIENT for B (if A is true, B follows)
+- **Backward reading:** we need A to prove B, but A being true does not mean B is the ONLY thing A can prove
 
 ---
 
-💡 **Core Intuition**: MYCIN is a backward-chaining rule system that asks only necessary questions, propagates uncertainty through confidence factors, and abandons low-confidence paths early.
+## WHY vs HOW Queries — A Clean Summary
+
+This comes up in exams either as a direct question or as part of a backward/forward chaining answer.
+
+| Query | Chaining Direction | What It Does | Example |
+|---|---|---|---|
+| **WHY** | Backward | Explains why the system is asking a particular question | Doctor: "Why are you asking about rash?" System: "Because I am testing the hypothesis of measles, which requires runny nose AND rash." |
+| **HOW** | Forward-like | Explains how the system reached a particular conclusion | Doctor: "How did you conclude Bacteroides?" System: "Because stain=gram-negative AND morphology=rod AND aerobicity=anaerobic, which triggers Rule 27." |
+
+Think of it this way:
+- **WHY** looks UP the chain (toward the goal): "I'm asking because I need this to test THAT hypothesis"
+- **HOW** looks DOWN the chain (toward the facts): "I concluded this because THOSE facts triggered THAT rule"
 
 ---
 
-## 📐 正式定义（Formal Definition）
+## E-MYCIN — The First Expert System Shell
 
-### MYCIN Architecture -- Three Subprograms
+Here is one of the most important ideas in AI engineering history.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         MYCIN System                            │
-│                                                                 │
-│  ┌──────────────────────┐    ┌───────────────────────────────┐  │
-│  │   Knowledge Base      │    │      Dynamic Data             │  │
-│  │   (Persistent,        │    │  (Working Memory,             │  │
-│  │    Long-term Memory)  │    │   Per-case, Short-term)       │  │
-│  │   450+ IF-THEN rules  │    │   Patient facts gathered      │  │
-│  │   with CF values      │    │   during this consultation    │  │
-│  └──────────┬────────────┘    └──────────────┬────────────────┘  │
-│             │                                │                  │
-│  ┌──────────┴────────────────────────────────┴────────────────┐ │
-│  │            Inference Engine (MONITOR + FINDOUT)             │ │
-│  │            Backward Chaining Controller                    │ │
-│  │            Abandons paths when CF < 0.2                    │ │
-│  └──────────────────────┬─────────────────────────────────────┘ │
-│                         │                                       │
-│  ┌──────────────────────┴─────────────────────────────────────┐ │
-│  │                                                            │ │
-│  │  Subprogram 1:           Subprogram 2:                     │ │
-│  │  CONSULTATION SYSTEM     EXPLANATION SYSTEM                │ │
-│  │  (Conducts the           (Handles WHY and HOW              │ │
-│  │   diagnostic dialogue)    queries from clinician)          │ │
-│  │                                                            │ │
-│  │  Subprogram 3:                                             │ │
-│  │  RULE-ACQUISITION SYSTEM                                   │ │
-│  │  (Allows experts to add/modify rules in KB)                │ │
-│  │                                                            │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │              User Interface (CLI)                          │ │
-│  │  Clinician answers questions, asks WHY/HOW,                │ │
-│  │  receives diagnosis and treatment recommendation           │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
+After MYCIN was built, the researchers realized something: the inference engine, the explanation system, and the user interface had NOTHING to do with medicine. They were completely general. The only medical-specific part was the knowledge base (the 200 rules about bacteria).
 
-**Key architectural insight**: The separation of Knowledge Base from Inference Engine is what enabled **E-MYCIN** -- remove the medical rules and you get a reusable shell.
-
-### Production Rule Format
+So they stripped out the medical knowledge and got **E-MYCIN** (Empty MYCIN) — a general-purpose shell:
 
 ```
-IF   [condition₁] AND [condition₂] AND ...
-THEN [conclusion] WITH CF [confidence_factor]
+MYCIN    = E-MYCIN + Medical Knowledge Base
+PUFF     = E-MYCIN + Pulmonary Disease Knowledge Base
+HEADMED  = E-MYCIN + Headache Diagnosis Knowledge Base
+New System = E-MYCIN + Your Domain Knowledge Base
 ```
 
-**Concrete example from lecture:**
+This was revolutionary because it separated **knowledge** from **reasoning**. You did not need to write a new AI program for every domain — you just plugged in different rules.
 
-```
-IF   the gram stain of the organism is gram-negative     (condition 1)
-AND  the morphology of the organism is rod               (condition 2)
-AND  the aerobicity of the organism is anaerobic         (condition 3)
-THEN the identity of the organism is Bacteroides  (CF = 0.6)
-```
+### The Knowledge Acquisition Bottleneck
 
-CF calculation for this rule:
+Expert systems had a fatal weakness that eventually led to the "AI winter" of the late 1980s:
 
-$$CF(\text{conclusion}) = CF(\text{premise}) \times CF(\text{rule})$$
+1. **Hard to extract knowledge.** Try getting a doctor to articulate EVERY rule they use. Most expertise is intuitive and implicit — experts often cannot explain why they make a decision.
+2. **Hard to maintain.** Medical knowledge changes constantly. 200 rules become 2000 rules. Debugging rule interactions becomes a nightmare.
+3. **Brittle.** If a situation falls outside the rules, the system has no way to reason about it. Unlike a human, it cannot improvise.
+4. **No learning.** MYCIN could not learn from its mistakes or from new cases. Every improvement required a human to manually add or modify rules.
 
-$$CF(\text{premise}) = \min(CF(\text{gram-negative}),\; CF(\text{rod}),\; CF(\text{anaerobic}))$$
+This is why machine learning eventually replaced expert systems for most tasks. But the ideas — separating knowledge from reasoning, explaining decisions, handling uncertainty — remain deeply influential.
 
-### Confidence Factor (CF) Formulas
+---
 
-**Range**: $CF \in [-1.0, +1.0]$
+## Past Paper: 2025 Sample Q6 (3 marks) — Complete Walkthrough
 
-| Value | Meaning |
+**Question:** Describe backward chaining reasoning for a patient with runny nose.
+
+**Given concepts:** runny nose, history of allergies, rash, common cold, allergies, measles.
+
+Let me show you exactly how to answer this for full marks.
+
+### What the Examiner Wants
+
+Three things, worth 1 mark each:
+
+1. You correctly start from a **goal/hypothesis** (not from facts)
+2. You show **backward reasoning** — tracing from goal to required evidence
+3. You show that the system **asks for missing information**
+
+### Model Answer
+
+Backward chaining is a goal-driven reasoning strategy. The system starts with a hypothesis and works backward through rules to determine what evidence is needed.
+
+**Instance 1 — Goal: common cold**
+
+The system hypothesizes "common cold." It looks up the relevant rule: IF runny_nose THEN common_cold. It checks: does the patient have a runny nose? Yes. Therefore, the hypothesis "common cold" is supported.
+
+**Instance 2 — Goal: measles**
+
+The system hypothesizes "measles." The relevant rule: IF runny_nose AND distinctive_rash THEN measles. The patient has a runny nose (confirmed), but the system does not know about a rash. It asks the physician: "Does the patient have a distinctive rash?" — this is a WHY query situation.
+
+**Instance 3 — Goal: allergies**
+
+The system hypothesizes "allergies." The relevant rule: IF runny_nose AND history_of_allergies THEN allergies. Runny nose is confirmed, but history of allergies is unknown. The system asks: "Does the patient have a history of allergies?"
+
+**Important:** Backward chaining does NOT prove that any single diagnosis is correct. It identifies possible support. Multiple hypotheses can be simultaneously supported by the same evidence (runny nose supports all three).
+
+### Mark Allocation
+
+| What to Include | Marks |
 |---|---|
-| $+1.0$ | Definitely true |
-| $+0.7$ | Fairly confident |
-| $0.0$ | No information (unknown) |
-| $-0.7$ | Fairly confident it's false |
-| $-1.0$ | Definitely false |
-
-**Formula 1 -- Conjunction (AND) of premises:**
-
-$$CF(A \text{ AND } B) = \min(CF_A, \; CF_B)$$
-
-> Intuition: a chain is only as strong as its weakest link.
-
-**Formula 2 -- Disjunction (OR) of premises:**
-
-$$CF(A \text{ OR } B) = \max(CF_A, \; CF_B)$$
-
-> Intuition: you only need one good reason to believe.
-
-**Formula 3 -- Rule application (premise → conclusion):**
-
-$$CF(\text{conclusion}) = CF(\text{premise}) \times CF(\text{rule})$$
-
-> Intuition: uncertainty compounds when you reason through a rule.
-
-**Formula 4 -- Combining multiple rules for the same conclusion (both positive):**
-
-$$CF_{combined} = CF_1 + CF_2 \times (1 - CF_1)$$
-
-> Intuition: independent evidence reinforces belief, but with diminishing returns.
-
-**Formula 4b -- Both negative:**
-
-$$CF_{combined} = CF_1 + CF_2 \times (1 + CF_1)$$
-
-**Formula 4c -- One positive, one negative:**
-
-$$CF_{combined} = \frac{CF_1 + CF_2}{1 - \min(|CF_1|, |CF_2|)}$$
-
-> For the exam, the "both positive" case (Formula 4) is by far the most commonly tested.
+| Start from a goal/hypothesis, not from facts | 1 |
+| Show backward reasoning (goal → what evidence do I need?) | 1 |
+| Show the system asking for missing information when evidence is unknown | 1 |
 
 ---
 
-## 🔄 机制与推导（How It Works）
+## Practice Problems
 
-### Forward Chaining vs Backward Chaining -- Formal Definitions
+### Problem 1 — Forward Chaining Step by Step
 
-#### Forward Chaining (Data-Driven, A → B)
-
-- Starts from **known facts** in working memory
-- Applies all matching rules to derive new conclusions
-- Uses **Modus Ponens**: IF A is true AND (A → B), THEN B is true
-- Direction: facts → conclusions
-- Example: "Patient has fever and cough → apply matching rules → conclude possible flu"
-
-#### Backward Chaining (Goal-Driven, B → A)
-
-- Starts from a **hypothesis or goal**
-- Finds rules whose conclusion matches the goal
-- Checks if premises are supported; if not, makes them sub-goals or asks the user
-- Direction: hypothesis → required evidence
-
-#### Critical Logical Distinction (Exam-Critical!)
+Given these rules and facts, show forward chaining:
 
 ```
-IF A THEN B means:
-  - A is SUFFICIENT for B (A being true is enough to conclude B)
-  - B is NECESSARY for A (if B is false, A cannot lead to B)
+Rules:
+  R1: IF fever AND cough THEN flu
+  R2: IF flu AND age > 65 THEN hospitalize
+  R3: IF cough AND sore_throat THEN cold
+  R4: IF fever AND rash THEN measles
 
-IMPORTANT: IF A THEN B does NOT mean:
-  - A is the ONLY cause of B (other rules may also conclude B!)
-  - B implies A (that would be the converse fallacy)
-
-Backward chaining implication:
-  - When working backward from B, we find A as a POSSIBLE condition
-  - A is a possible necessary condition, but NOT necessarily the unique one
-  - Multiple rules can have B as their conclusion
+Known facts: {fever, cough, age > 65}
 ```
 
-**Example**: Rule 1 says "IF flu THEN fever." Rule 2 says "IF meningitis THEN fever." Starting from "fever" and working backward, we find BOTH flu and meningitis as possible causes -- backward chaining identifies **possible necessary conditions**, not unique ones.
-
-### Backward Chaining in MYCIN -- Step by Step
+**Solution:**
 
 ```
-GOAL: Determine the identity of the organism
+Step 1: Check all rules against known facts
+  R1: fever (YES) AND cough (YES) → FIRE → add "flu" to facts
+  R2: flu (not yet known) — skip for now
+  R3: cough (YES) AND sore_throat (NO) — cannot fire
+  R4: fever (YES) AND rash (NO) — cannot fire
 
-Step 1: Find rules whose THEN mentions "organism identity"
-        → Rule 1, Rule 3 are candidates
-        → Start with the HIGHEST-CONFIDENCE goal
+Step 2: Facts updated: {fever, cough, age > 65, flu}
+  Re-check rules:
+  R2: flu (YES) AND age > 65 (YES) → FIRE → add "hospitalize"
+  (R1 already fired, R3 and R4 still cannot fire)
 
-Step 2: Try Rule 1:
-        IF infection = primary-bacteremia  [Unknown → FINDOUT]
-        AND site = sterile-site            [Unknown → FINDOUT]
-        THEN organism = E.coli (CF=0.8)
+Step 3: Facts updated: {fever, cough, age > 65, flu, hospitalize}
+  No new rules can fire → STOP.
 
-Step 3: FINDOUT "infection type" → Clinician answers:
-        "primary-bacteremia" (CF = 1.0) → store in Working Memory
-
-Step 4: FINDOUT "culture site" → Clinician answers:
-        "sterile-site" (CF = 0.9) → store in Working Memory
-
-Step 5: Rule 1 fires:
-        CF(premise) = min(1.0, 0.9) = 0.9
-        CF(E.coli)  = 0.9 × 0.8 = 0.72
-
-Step 6: Try Rule 3:
-        IF infection = primary-bacteremia  [MONITOR: already known, CF=1.0]
-        AND patient-age > 60              [Unknown → FINDOUT]
-        THEN organism = Klebsiella (CF=0.6)
-
-Step 7: FINDOUT "patient age" → Clinician answers:
-        "age = 72" (CF = 1.0)
-
-Step 8: Rule 3 fires:
-        CF(premise) = min(1.0, 1.0) = 1.0
-        CF(Klebsiella) = 1.0 × 0.6 = 0.6
-
-Result: E.coli (CF=0.72) vs Klebsiella (CF=0.6)
-        → Most likely: E.coli
+Final conclusions: flu, hospitalize
 ```
 
-Notice how MYCIN only asked three questions (infection type, culture site, patient age) -- it didn't ask about every possible fact. That's the efficiency of backward chaining: **ask only what you need**.
+### Problem 2 — Backward Chaining Step by Step
 
-### CF Abandonment Threshold (CF < 0.2)
-
-MYCIN does not chase every hypothesis indefinitely. When a chain of reasoning produces a CF below 0.2, the system **abandons** that path:
+Using the same rules, show backward chaining with goal = "hospitalize":
 
 ```
-Example: Investigating whether organism X causes the infection
-
-Step 1: Start with hypothesis CF = 0.5
-Step 2: Apply Rule (CF_rule = 0.6):
-        CF(condition1) = 0.5 × 0.6 = 0.30   ← still ≥ 0.2, continue
-Step 3: Apply next Rule (CF_rule = 0.6):
-        CF(condition2) = 0.30 × 0.6 = 0.18  ← below 0.2, ABANDON!
-
-The system stops pursuing this line of reasoning because
-the accumulated confidence is too low to be useful.
+Goal: hospitalize
+  Which rule concludes "hospitalize"? R2.
+  R2 needs: flu AND age > 65
+  
+  Sub-goal 1: age > 65
+    Is this a known fact? YES. ✓
+  
+  Sub-goal 2: flu
+    Is this a known fact? NO.
+    Which rule concludes "flu"? R1.
+    R1 needs: fever AND cough.
+    
+    Sub-sub-goal 2a: fever — known? YES. ✓
+    Sub-sub-goal 2b: cough — known? YES. ✓
+    
+    R1 fires → flu is derived. ✓
+  
+  R2 fires → hospitalize is SUPPORTED. ✓
 ```
 
-This prevents wasting time on weak hypotheses and focuses the system on the most promising diagnoses.
+Notice how backward chaining only explored R1 and R2 — it never even looked at R3 or R4. It was laser-focused on proving "hospitalize."
 
-### MONITOR vs FINDOUT -- Three-Step Priority
+### Problem 3 — WHY or HOW?
 
-```
-Evaluate premise P:
-  1. MONITOR: Is P already in Working Memory?
-     → YES: use it (with its associated CF)
-     → NO: go to step 2
+For each scenario, identify whether it is a WHY query or a HOW query:
 
-  2. Are there rules whose conclusion matches P?
-     → YES: set P as a sub-goal, recurse (backward chain again)
-     → NO: go to step 3
+**(a)** The system has just concluded "flu." The doctor asks: "How did you determine the patient has flu?"
 
-  3. FINDOUT: Ask the user directly
-     → Store answer in Working Memory for future MONITOR calls
-```
+**Answer:** HOW query. The system traces forward from facts: "Because the patient has fever AND cough, which triggers Rule R1."
 
-This three-step priority is crucial: MYCIN avoids redundant questions by always checking memory first.
+**(b)** The system asks the doctor: "Does the patient have a rash?" The doctor responds: "Why are you asking about rash?"
 
-### CF Calculation -- Full Worked Example
+**Answer:** WHY query. The system traces backward toward the goal: "Because I am testing the hypothesis of measles, which requires fever AND rash."
 
-**Scenario**: Diagnosing measles with two supporting rules.
+**(c)** The system presents a final diagnosis. The doctor asks: "How did you reach the diagnosis of Bacteroides?"
 
-```
-Rule A: IF fever(CF=0.8) AND rash(CF=0.6)
-        THEN measles (CF_rule = 0.7)
+**Answer:** HOW query. Forward-like trace from evidence to conclusion.
 
-Rule B: IF recent-contact-with-measles-patient(CF=0.9)
-        THEN measles (CF_rule = 0.5)
-```
+**(d)** The system asks: "Is the organism aerobic or anaerobic?" The doctor asks: "Why do you need to know this?"
 
-**Step 1 -- Rule A fires:**
+**Answer:** WHY query. The system is pursuing a backward chain toward a hypothesis about organism identity.
 
-$$CF_A(\text{premise}) = \min(0.8, 0.6) = 0.6$$
-
-$$CF_A(\text{measles}) = 0.6 \times 0.7 = 0.42$$
-
-**Step 2 -- Rule B fires:**
-
-$$CF_B(\text{premise}) = 0.9$$
-
-$$CF_B(\text{measles}) = 0.9 \times 0.5 = 0.45$$
-
-**Step 3 -- Combine Rule A and Rule B (both positive):**
-
-$$CF_{combined} = CF_A + CF_B \times (1 - CF_A)$$
-$$CF_{combined} = 0.42 + 0.45 \times (1 - 0.42)$$
-$$CF_{combined} = 0.42 + 0.45 \times 0.58$$
-$$CF_{combined} = 0.42 + 0.261 = 0.681$$
-
-**Result**: measles with CF = **0.681**
-
-> Key insight: neither rule alone gives high confidence (0.42 and 0.45), but together they push it to 0.681. Independent evidence accumulates, but never blindly -- the formula ensures we can't exceed 1.0.
-
-### Three More Rules -- Extended Example
-
-What if a third rule also supports measles with CF = 0.3?
-
-$$CF_{new} = 0.681 + 0.3 \times (1 - 0.681) = 0.681 + 0.3 \times 0.319 = 0.681 + 0.0957 = 0.777$$
-
-Each additional piece of evidence adds less and less -- **diminishing returns**, just like in real life.
-
-### Explanation Facility
-
-**WHY Query** (backward chaining style -- "why are you asking this?"):
+### Problem 4 — Compute CF for a Chain of Rules
 
 ```
-Clinician: WHY?
-MYCIN:     I am trying to determine whether the patient has measles.
-           Rule A states:
-             IF the patient has fever
-             AND the patient has a rash
-             THEN there is evidence (CF=0.7) that the diagnosis is measles.
-           I already know the patient has fever (CF=0.8).
-           I need to know about rash to evaluate this rule.
+Rule 1: IF A AND B THEN C  (CF = 0.8)
+Rule 2: IF C AND D THEN E  (CF = 0.7)
+
+Given:
+  CF(A) = 0.9
+  CF(B) = 0.6
+  CF(D) = 0.85
 ```
 
-The WHY query reveals the **current backward chaining goal** -- it shows which rule MYCIN is trying to evaluate and why it needs the requested information.
-
-**HOW Query** (forward chaining style -- "how did you conclude that?"):
+**Solution:**
 
 ```
-Clinician: HOW measles?
-MYCIN:     I used Rule A and Rule B.
-           Rule A concluded measles (CF=0.42) based on:
-             - fever (CF=0.8) [told by clinician]
-             - rash (CF=0.6) [told by clinician]
-           Rule B concluded measles (CF=0.45) based on:
-             - recent contact with measles patient (CF=0.9) [told by clinician]
-           Combined CF = 0.681
+Step 1: Compute CF(C)
+  CF(premise of Rule 1) = min(CF(A), CF(B)) = min(0.9, 0.6) = 0.6
+  CF(C) = CF(premise) × CF(Rule 1) = 0.6 × 0.8 = 0.48
+
+Step 2: Compute CF(E)
+  CF(premise of Rule 2) = min(CF(C), CF(D)) = min(0.48, 0.85) = 0.48
+  CF(E) = CF(premise) × CF(Rule 2) = 0.48 × 0.7 = 0.336
 ```
 
-The HOW query traces the **forward chain** of reasoning that led to the conclusion -- it shows which rules fired and what evidence was used.
+So the final confidence in E is only 0.336. Notice how uncertainty compounds through a chain of rules — each step multiplies by a number less than 1, so confidence drops rapidly. This is one reason why expert systems with long reasoning chains tend to have very low confidence in their final conclusions.
 
-This transparency is a major advantage of rule-based systems over modern neural networks.
+### Problem 5 — Design Your Own Backward Chaining Scenario
+
+Suppose you have these rules for a car diagnostic system:
+
+```
+R1: IF engine_won't_start AND battery_dead THEN replace_battery
+R2: IF engine_won't_start AND fuel_empty THEN refuel
+R3: IF engine_won't_start AND starter_clicks THEN bad_starter_motor
+R4: IF battery_dead AND lights_dim THEN replace_battery
+```
+
+Known facts: {engine_won't_start, lights_dim}
+
+**Task:** Show backward chaining for the goal "replace_battery."
+
+**Solution:**
+
+```
+Goal: replace_battery
+  Which rules conclude replace_battery? R1 and R4.
+
+  Try R1: needs engine_won't_start AND battery_dead
+    engine_won't_start? YES. ✓
+    battery_dead? UNKNOWN.
+    
+    Sub-goal: battery_dead
+    No rule directly concludes battery_dead from known facts alone.
+    But wait — can we infer it?
+    
+    Actually, R4 concludes replace_battery too. Let's try R4:
+    R4 needs battery_dead AND lights_dim.
+    lights_dim? YES. ✓
+    battery_dead? Still UNKNOWN.
+    
+    System asks mechanic: "Is the battery dead?"
+    If YES → R1 fires (and R4 also fires) → replace_battery is SUPPORTED.
+```
 
 ---
 
-## ⚖️ 权衡分析（Trade-offs & Comparisons）
+## Common Mistakes — Do Not Lose Easy Marks
 
-### Forward Chaining vs Backward Chaining
+1. **Confusing the direction of chaining.** Forward: facts → conclusions. Backward: goal → find evidence. If you write "backward chaining starts from facts," you will lose marks immediately.
 
-| Aspect | Forward Chaining（前向链接） | Backward Chaining（后向链接） |
+2. **Saying MYCIN uses forward chaining.** MYCIN's primary reasoning strategy is **backward chaining**. The HOW explanation traces forward, but the core reasoning is backward.
+
+3. **Claiming backward chaining proves uniqueness.** Backward chaining shows that evidence *supports* a hypothesis. It does NOT prove the hypothesis is the *only* explanation.
+
+4. **Using multiplication instead of min() for AND.** CF of a conjunctive premise uses **min()**, not multiplication. Multiplication is for combining premise CF with rule CF. These are two different formulas — do not mix them up.
+
+5. **Mixing up WHY and HOW.** WHY = backward (why are you asking me this?). HOW = forward-like (how did you reach that conclusion?). Think: WHY looks up toward the goal, HOW looks down toward the facts.
+
+6. **Saying CF is a probability.** CFs are NOT probabilities. They range from -1 to 1 and represent degrees of belief, not statistical likelihood.
+
+7. **Forgetting E-MYCIN.** If asked about MYCIN's significance, the separation of knowledge from reasoning (leading to E-MYCIN as a reusable shell) is a key point worth mentioning.
+
+---
+
+## English Expression Guide
+
+### Describing Backward Chaining (Exam Sentences)
+
+- "Backward chaining begins with a hypothesis and attempts to find evidence that supports it."
+- "The system works backward from a goal, identifying what conditions must hold for the goal to be true."
+- "When the system lacks information needed to evaluate a rule, it queries the user."
+- "Backward chaining does not prove that a hypothesis is uniquely correct; it identifies possible support."
+
+### Describing Forward Chaining (Exam Sentences)
+
+- "Forward chaining starts from known facts and applies rules to derive new conclusions."
+- "Given a set of observations, the system fires all applicable rules to produce inferences."
+- "Forward chaining is data-driven: it derives everything that can be concluded from the available evidence."
+
+### Describing MYCIN's Architecture (Exam Sentences)
+
+- "MYCIN separates domain knowledge from the inference mechanism, storing rules in a knowledge base and reasoning over them with a general-purpose engine."
+- "The key innovation of MYCIN is that the same inference engine can be reused with different knowledge bases, leading to the concept of an expert system shell (E-MYCIN)."
+
+### Vocabulary Pitfalls
+
+| Correct Term | Common Mistake | Why It Is Wrong |
 |---|---|---|
-| **Direction** | Facts → Conclusions (A → B) | Goal → Required Evidence (B → A) |
-| **Logical basis** | Modus Ponens | Hypothesis testing |
-| **Analogy** | A scientist observing data and forming theories | A detective testing a hypothesis |
-| **Starting point** | Known facts in working memory | A specific goal or hypothesis |
-| **Question strategy** | Doesn't ask questions -- uses what's available | Asks targeted questions to fill gaps |
-| **Efficiency** | May explore many irrelevant rules | Focused -- only explores rules relevant to the goal |
-| **Best for** | Monitoring, alerting, configuration | Diagnosis, planning, troubleshooting |
-| **MYCIN uses** | No (not primary) | **Yes** (primary inference method) |
-| **Sufficiency** | A is SUFFICIENT for B | B is NECESSARY for A |
-| **Risk** | Combinatorial explosion of derived facts | Deep recursion if rule chains are long |
-
-### A is SUFFICIENT for B vs B is NECESSARY for A
-
-```
-Rule: IF A THEN B
-
-Forward (A → B):
-  "If I have A, that is SUFFICIENT to conclude B."
-  "A is enough. Having A guarantees B."
-
-Backward (B → A):
-  "If I want B, then A is a NECESSARY condition."
-  "I need A (among possibly other things) to get B."
-
-BUT: A is NOT the ONLY way to get B!
-     Other rules may also conclude B from different premises.
-     Backward chaining finds POSSIBLE necessary conditions.
-```
-
-### Expert Systems vs Modern Machine Learning
-
-| Feature | Expert System (MYCIN) | Machine Learning (e.g., Neural Network) |
-|---|---|---|
-| **Knowledge source** | Human experts (manual encoding) | Data (automated learning) |
-| **Knowledge form** | Explicit IF-THEN rules | Implicit weights in a model |
-| **Explainability** | High -- can trace every rule (WHY/HOW) | Low -- often a "black box" |
-| **Learning** | None -- rules are fixed | Yes -- improves with more data |
-| **Handling uncertainty** | Confidence Factors (handcrafted) | Probabilistic outputs (learned) |
-| **Coverage** | Only what rules cover (brittle) | Can generalise to unseen cases |
-| **Domain transfer** | E-MYCIN shell (but needs new rules) | Transfer learning, fine-tuning |
-| **Maintenance** | Hard -- manually update rules | Retrain on new data |
-| **Data requirement** | Needs experts, not data | Needs large datasets, not experts |
-
-### MYCIN vs Bayesian Networks
-
-| Feature | MYCIN (CF) | Bayesian Network |
-|---|---|---|
-| **Theoretical basis** | Ad hoc (not formally probabilistic) | Probability theory (rigorous) |
-| **Independence assumption** | Rules are somewhat independent | Models dependencies explicitly |
-| **Combination formula** | $CF_1 + CF_2(1 - CF_1)$ | Bayes' theorem with priors |
-| **Ease of use** | Simple for experts to assign CFs | Requires conditional probabilities |
-| **Accuracy** | Good enough in practice | Theoretically more sound |
+| knowledge base | database | Too generic; a knowledge base has rules, not just data |
+| production rule | if-then statement | Too informal for an exam |
+| inference engine | reasoning program | Too vague |
+| certainty factor (CF) | probability | CF is not a probability — different mathematical framework |
+| backward chaining | reverse reasoning | Non-standard term |
+| expert system shell | template | A shell is a specific concept with inference + explanation capabilities |
 
 ---
 
-## 🏗️ 设计题答题框架
-
-### If asked: "Explain backward chaining for medical diagnosis" (S1 2025 Sample Q6 style)
-
-**WHAT**: "Backward chaining is a goal-driven reasoning strategy used in expert systems like MYCIN. It starts with a hypothesis (e.g., a possible diagnosis) and works backward through the rule base to find supporting evidence in the patient's symptoms."
-
-**WHY**: "Backward chaining is more efficient than forward chaining for diagnosis because it only asks the clinician for information that is actually needed to evaluate relevant rules, rather than gathering all possible data first."
-
-**HOW**: "The inference engine sets a top-level goal (e.g., 'what is the diagnosis?'). It finds rules whose THEN part matches the goal. For each rule, it checks whether the IF conditions are known (MONITOR). If not, conditions become sub-goals, recursively applying the same process. If no rule can derive a fact, the system uses FINDOUT to ask the clinician. The system starts with the highest-confidence goal and abandons paths when CF drops below 0.2."
-
-**TRADE-OFF**: "The advantage is efficiency and transparency (the WHY/HOW facility lets clinicians understand the reasoning). The limitation is the knowledge acquisition bottleneck -- all 450+ rules had to be manually encoded by interviewing domain experts."
-
-**EXAMPLE**: "To determine the organism: MYCIN finds Rule 1 (IF infection=bacteremia AND site=sterile THEN E.coli CF=0.8). It asks for infection type and culture site, then computes CF(E.coli) = min(1.0, 0.9) x 0.8 = 0.72."
-
-### If asked: "Calculate the combined CF" (computation question)
-
-**Step 1**: For each rule, compute CF(premise) using AND = min, OR = max.
-
-**Step 2**: Compute CF(conclusion) = CF(premise) x CF(rule) for each rule.
-
-**Step 3**: If multiple rules support the same conclusion, combine: $CF_{combined} = CF_1 + CF_2(1 - CF_1)$.
-
-**Step 4**: State the final CF value and interpret it (e.g., "moderately confident").
-
-### If asked: "What is E-MYCIN and why is it significant?"
-
-**WHAT**: "E-MYCIN (Essential MYCIN) is the **first domain-independent expert system shell**, created by removing MYCIN's medical knowledge base while retaining the inference engine, explanation facility, and user interface."
-
-**WHY**: "It demonstrated that the reasoning architecture could be separated from domain knowledge, making it reusable across fields."
-
-**HOW**: "To build a new expert system, developers load a new knowledge base into the E-MYCIN shell. The backward chaining engine, CF propagation, and WHY/HOW facilities work unchanged."
-
-**EXAMPLE**: "E-MYCIN was used to build SACON (structural engineering analysis) and PUFF (pulmonary function diagnosis) -- different domains, same inference engine."
-
-**LIMITATION**: "While the shell is reusable, encoding new domain knowledge still requires extensive expert interviews -- the knowledge acquisition bottleneck remains."
-
----
-
-## 📝 历年真题与考试练习（Exam Questions & Practice）
-
-### S1 2025 Sample Q6 (3 marks) -- Backward Chaining for Medical Diagnosis
-
-**Question**: Explain how backward chaining works for medical diagnosis. Use the following scenario: A patient has a runny nose. Possible diagnoses include common cold, allergies, and measles.
-
-<details>
-<summary><strong>Click to reveal model answer</strong></summary>
-
-**Backward chaining** is goal-driven reasoning. We start with **hypotheses** (possible diagnoses) and work backward to find supporting evidence in the patient's symptoms.
-
-**Step 1 -- List hypotheses to test:**
-- Hypothesis 1: Common Cold
-- Hypothesis 2: Allergies
-- Hypothesis 3: Measles
-
-**Step 2 -- Test each hypothesis by checking required symptoms:**
-
-**Support "Common Cold":**
-- Rule: IF runny nose AND sore throat AND mild fever THEN common cold (CF=0.7)
-- Runny nose? YES (given) ✓
-- Sore throat? Need to check → FINDOUT
-- Mild fever? Need to check → FINDOUT
-
-**Support "Allergies":**
-- Rule: IF runny nose AND history of allergies AND itchy eyes THEN allergies (CF=0.6)
-- Runny nose? YES (given) ✓
-- History of allergies? Need to check → FINDOUT
-- Itchy eyes? Need to check → FINDOUT
-
-**Support "Measles":**
-- Rule: IF runny nose AND distinctive rash AND high fever THEN measles (CF=0.8)
-- Runny nose? YES (given) ✓
-- Distinctive rash? Need to check → FINDOUT
-- High fever? Need to check → FINDOUT
-
-**Step 3 -- System asks targeted questions** based on which hypotheses it is testing. It does NOT ask about every possible symptom -- only those needed to evaluate the current rules.
-
-**Step 4 -- Calculate CFs** for each hypothesis based on evidence gathered, and report the diagnosis with the highest combined CF.
-
-**Key points for marks:**
-1. Start from hypothesis, not from data (1 mark)
-2. Only ask questions needed to evaluate relevant rules (1 mark)
-3. Show specific example of checking symptoms against rules (1 mark)
-
-</details>
-
----
-
-### Practice Question 1 -- CF Calculation (8 marks)
-
-**Consider the following MYCIN rules:**
-
-```
-Rule 1: IF patient-has-fever (CF=0.9)
-        AND patient-has-stiff-neck (CF=0.7)
-        THEN diagnosis is meningitis (CF_rule = 0.8)
-
-Rule 2: IF patient-has-fever (CF=0.9)
-        AND cerebrospinal-fluid-is-cloudy (CF=0.85)
-        THEN diagnosis is meningitis (CF_rule = 0.75)
-```
-
-**(a)** Calculate the CF for meningitis from Rule 1 alone. (3 marks)
-
-**(b)** Calculate the CF for meningitis from Rule 2 alone. (3 marks)
-
-**(c)** Calculate the combined CF for meningitis using both rules. (2 marks)
-
-<details>
-<summary><strong>Click to reveal answer</strong></summary>
-
-**(a) Rule 1:**
-
-$$CF_1(\text{premise}) = \min(0.9, 0.7) = 0.7$$
-$$CF_1(\text{meningitis}) = 0.7 \times 0.8 = 0.56$$
-
-**(b) Rule 2:**
-
-$$CF_2(\text{premise}) = \min(0.9, 0.85) = 0.85$$
-$$CF_2(\text{meningitis}) = 0.85 \times 0.75 = 0.6375$$
-
-**(c) Combined:**
-
-$$CF_{combined} = 0.56 + 0.6375 \times (1 - 0.56)$$
-$$= 0.56 + 0.6375 \times 0.44$$
-$$= 0.56 + 0.2805$$
-$$= 0.8405$$
-
-**Interpretation**: MYCIN would be fairly confident (CF approximately 0.84) that the diagnosis is meningitis.
-
-</details>
-
----
-
-### Practice Question 2 -- Forward vs Backward Chaining (6 marks)
-
-**Explain the difference between forward chaining and backward chaining in expert systems. Which does MYCIN use and why? Illustrate with a medical diagnosis example.**
-
-<details>
-<summary><strong>Click to reveal answer framework</strong></summary>
-
-**Forward Chaining** (2 marks):
-- Data-driven: starts with known facts in working memory
-- Applies all matching rules to derive new facts via **Modus Ponens** (IF A is true AND A→B, THEN B)
-- Continues until a goal is reached or no more rules fire
-- A is **sufficient** for B
-- Example: "Patient has fever and cough → apply rules → conclude possible flu"
-
-**Backward Chaining** (2 marks):
-- Goal-driven: starts with a hypothesis or goal
-- Finds rules whose conclusion matches the goal
-- Checks if premises are known; if not, creates sub-goals or asks the user
-- B is **necessary** for A (but NOT the only cause!)
-- Example: "Is the patient's infection caused by E.coli? → What evidence do I need? → Ask for infection type and culture site"
-
-**Why MYCIN uses backward chaining** (2 marks):
-- Medical diagnosis is naturally hypothesis-driven
-- More efficient: only asks the clinician for information relevant to the current hypothesis
-- Avoids gathering unnecessary data (forward chaining might explore hundreds of irrelevant rules)
-- Supports the WHY explanation: "I am asking about X because I am trying to determine Y"
-- Can abandon low-confidence paths early (CF < 0.2 threshold)
-
-</details>
-
----
-
-### Practice Question 3 -- MYCIN Architecture (5 marks)
-
-**Draw and label the main components of the MYCIN expert system. Explain the role of each component.**
-
-<details>
-<summary><strong>Click to reveal answer framework</strong></summary>
-
-**Components to include:**
-
-1. **Knowledge Base (KB)** -- 450+ production rules encoding medical expertise (IF-THEN with CF values). This is persistent, long-term memory.
-2. **Dynamic Data / Working Memory** -- Stores currently known facts about the patient being diagnosed. Per-case, short-term.
-3. **Inference Engine** -- Applies backward chaining; uses MONITOR (check memory) and FINDOUT (ask user). Starts with highest-confidence goal, abandons when CF < 0.2.
-4. **Three Subprograms:**
-   - Subprogram 1: **Consultation System** -- conducts the diagnostic dialogue
-   - Subprogram 2: **Explanation System** -- handles WHY queries (backward style) and HOW queries (forward style)
-   - Subprogram 3: **Rule-Acquisition System** -- allows experts to add/modify rules
-5. **User Interface** -- Clinician interacts via Q&A; provides data and can query the system
-
-**Key point**: The separation of Knowledge Base from Inference Engine enabled **E-MYCIN** -- the first expert system shell. Remove the medical rules and the inference engine can be reused for other domains.
-
-</details>
-
----
-
-### Practice Question 4 -- Tracing a Backward Chain (7 marks)
-
-**Given the following rules:**
-
-```
-Rule 1: IF A AND B THEN C (CF=0.9)
-Rule 2: IF C AND D THEN E (CF=0.8)
-Rule 3: IF A AND F THEN C (CF=0.7)
-```
-
-**Facts in working memory: A (CF=1.0), B (CF=0.8), D (CF=0.7), F (CF=0.6)**
-
-**Goal: Determine E.**
-
-**(a)** Trace the backward chaining process. (3 marks)
-
-**(b)** Calculate the final CF of E, accounting for Rules 1 and 3 both concluding C. (4 marks)
-
-<details>
-<summary><strong>Click to reveal answer</strong></summary>
-
-**(a) Backward chaining trace:**
-
-1. Goal = E. Find rules with E in conclusion → Rule 2: IF C AND D THEN E
-2. Check C: Unknown → sub-goal. Check D: Known (CF=0.7) via MONITOR.
-3. Sub-goal = C. Find rules with C in conclusion → Rule 1 and Rule 3.
-4. Rule 1: Need A (known, CF=1.0) and B (known, CF=0.8). Both available via MONITOR.
-5. Rule 3: Need A (known, CF=1.0) and F (known, CF=0.6). Both available via MONITOR.
-6. No FINDOUT needed -- all facts are in working memory.
-
-**(b) CF Calculation:**
-
-**Rule 1 → C:**
-$$CF_1(\text{premise}) = \min(1.0, 0.8) = 0.8$$
-$$CF_1(C) = 0.8 \times 0.9 = 0.72$$
-
-**Rule 3 → C:**
-$$CF_3(\text{premise}) = \min(1.0, 0.6) = 0.6$$
-$$CF_3(C) = 0.6 \times 0.7 = 0.42$$
-
-**Combine Rule 1 and Rule 3 for C:**
-$$CF(C) = 0.72 + 0.42 \times (1 - 0.72) = 0.72 + 0.42 \times 0.28 = 0.72 + 0.1176 = 0.8376$$
-
-**Now Rule 2 → E:**
-$$CF_2(\text{premise}) = \min(CF(C), CF(D)) = \min(0.8376, 0.7) = 0.7$$
-$$CF(E) = 0.7 \times 0.8 = 0.56$$
-
-**Final answer: CF(E) = 0.56**
-
-</details>
-
----
-
-### Practice Question 5 -- Quick CF Drill (3 marks)
-
-**Rule X: IF P(CF=0.7) AND Q(CF=0.5) THEN R (CF=0.6). What is CF(R)?**
-
-<details>
-<summary><strong>Click to reveal answer</strong></summary>
-
-$$CF(\text{premise}) = \min(0.7, 0.5) = 0.5$$
-$$CF(R) = 0.5 \times 0.6 = 0.30$$
-
-</details>
-
----
-
-### Practice Question 6 -- CF Abandonment (2 marks)
-
-**A backward chaining path starts with hypothesis CF=0.5. Each subsequent rule in the chain has CF_rule=0.6. After how many rule applications does MYCIN abandon this path (threshold: CF < 0.2)?**
-
-<details>
-<summary><strong>Click to reveal answer</strong></summary>
-
-$$\text{After Rule 1: } CF = 0.5 \times 0.6 = 0.30 \quad (\geq 0.2, \text{ continue})$$
-$$\text{After Rule 2: } CF = 0.30 \times 0.6 = 0.18 \quad (< 0.2, \text{ ABANDON})$$
-
-**Answer**: After **2** rule applications, the CF drops to 0.18 which is below the 0.2 threshold, so MYCIN abandons this path.
-
-</details>
-
----
-
-### Practice Question 7 -- WHY and HOW Queries (3 marks)
-
-**Explain what information the WHY and HOW queries reveal in MYCIN. Which type of chaining does each correspond to?**
-
-<details>
-<summary><strong>Click to reveal answer</strong></summary>
-
-**WHY query** (1.5 marks):
-- Corresponds to **backward chaining** style
-- Reveals the system's current reasoning goal
-- When MYCIN asks "What is the patient's temperature?" and the clinician responds "WHY?", MYCIN explains: "I am trying to determine if the patient has meningitis. Rule 5 states IF fever AND stiff neck THEN meningitis. I need to know about fever to evaluate this rule."
-- Shows the chain of reasoning from goal to current question
-
-**HOW query** (1.5 marks):
-- Corresponds to **forward chaining** style
-- Shows the rule chain that led to a specific conclusion
-- When the clinician asks "HOW did you conclude meningitis?", MYCIN traces forward through the rules it used and the evidence it gathered
-- Shows: "I used Rule 5 (fever=yes, CF=0.9 AND stiff neck=yes, CF=0.7) to conclude meningitis with CF=0.56"
-
-</details>
-
----
-
-## 🌐 英语表达要点（English Expression）
-
-### Describing MYCIN's Architecture
-```
-"MYCIN is a rule-based expert system developed by Ted Shortliffe at Stanford
- in the 1970s. It consists of a knowledge base containing over 450 production
- rules, dynamic working memory for patient data, and an inference engine that
- performs backward chaining. It has three main subprograms: a consultation
- system, an explanation system, and a rule-acquisition system."
-```
-
-### Explaining Backward Chaining
-```
-"Backward chaining is a goal-driven reasoning strategy. The system begins
- with a diagnostic goal, identifies rules whose conclusions match that goal,
- and then evaluates the premises. If a premise is unknown, it becomes a
- sub-goal, and the process recurses until all required facts are determined.
- The system starts with the highest-confidence goal and abandons paths when
- confidence drops below 0.2."
-```
-
-### Explaining the Sufficient/Necessary Distinction
-```
-"In the rule IF A THEN B, A is sufficient for B — having A is enough to
- conclude B. Conversely, B is necessary for A — if B is false, A cannot
- lead to B through this rule. However, A is not the only cause of B;
- other rules may also conclude B from different premises."
-```
-
-### Explaining CF Calculation
-```
-"The confidence factor for a conjunctive premise is the minimum of the
- individual CFs. The conclusion CF is then computed by multiplying the
- premise CF by the rule's CF. When multiple rules support the same
- conclusion, they are combined using the formula CF₁ + CF₂(1 - CF₁)."
-```
-
-### Explaining E-MYCIN
-```
-"E-MYCIN is the first domain-independent expert system shell, derived from
- MYCIN. By separating the inference engine from the medical knowledge base,
- the architecture became reusable for building expert systems in other
- domains such as structural engineering (SACON) and pulmonary function
- diagnosis (PUFF)."
-```
-
-### 易错表达 / Common Mistakes in English
-
-| Incorrect | Correct |
-|---|---|
-| "MYCIN uses forward chaining" | "MYCIN uses **backward** chaining (goal-driven)" |
-| "CFs are probabilities" | "CFs are **not** probabilities; they range from -1 to +1 and use different combination rules" |
-| "Multiply CFs to combine two rules" | "**Multiply** for rule application (premise x rule CF); use the **combination formula** for two rules supporting the same conclusion" |
-| "MYCIN learns from experience" | "MYCIN does **not** learn; its rules are manually encoded and remain fixed" |
-| "E-MYCIN is a different expert system" | "E-MYCIN is a domain-independent **shell** -- the same inference engine without domain-specific rules" |
-| "IF A THEN B means A is the only cause of B" | "IF A THEN B means A is **sufficient** for B, but other rules can also conclude B" |
-| "Backward chaining finds THE necessary condition" | "Backward chaining finds **possible** necessary conditions (not unique ones)" |
-
-### 关键词汇
-
-- **backward chaining** (not "backward chain*ed*" when used as a noun/modifier)
-- **confidence factor** (not "confidence level" or "certainty factor" -- stick with "confidence factor" for MYCIN)
-- **production rule** (not "production" alone)
-- **knowledge acquisition bottleneck** (the standard term for the core limitation)
-- **domain-independent shell** (the correct description of E-MYCIN)
-- **Modus Ponens** (the logical basis for forward chaining: IF A AND A→B THEN B)
-- **prefix notation** (LISP's way of writing expressions, e.g., (+ 2 3) instead of 2+3)
-
----
-
-## 🔧 Practical Applications (Modern Relevance)
-
-While MYCIN itself was never deployed clinically, its ideas live on in modern **business rules engines**:
-
-| System | Description |
-|---|---|
-| **Drools** (Java) | Open-source business rules engine; uses forward and backward chaining on production rules |
-| **Nools** (JavaScript) | Rules engine for Node.js, inspired by Drools |
-| **CLIPS** | C-based expert system tool descended from NASA's work |
-
-These systems are used today for fraud detection, insurance claim processing, medical decision support, and compliance checking -- essentially any domain where decisions can be encoded as IF-THEN rules with certainty measures.
-
----
-
-## 🔬 Evaluation of MYCIN
-
-- **Expert panel comparison**: MYCIN's diagnoses were compared against those of Stanford infectious disease specialists
-- **Result**: MYCIN achieved approximately **65% correct diagnoses**, comparable to the specialists on the panel
-- **Key finding**: High agreement between MYCIN's recommendations and expert consensus
-- **However**: MYCIN was **never deployed clinically** due to legal, ethical, and practical concerns (Who is liable if the system is wrong? Clinicians didn't trust a computer system in the 1970s)
-- **Legacy**: Demonstrated that expert systems could perform at expert level in narrow domains; led to the expert systems boom of the 1980s
-
----
-
-## ✅ 自测检查清单
-
-- [ ] 能画出 MYCIN 的架构图并标注 KB, Working Memory, Inference Engine, 三个子程序 (Consultation, Explanation, Rule-Acquisition)?
-- [ ] 能用英文解释 backward chaining 的完整流程（Goal → Find rules → Check premises → Sub-goal/FINDOUT → Recurse）?
-- [ ] 能区分 MONITOR 和 FINDOUT 的作用?
-- [ ] 能正确计算 CF(AND) = min, CF(OR) = max?
-- [ ] 能正确计算 CF(conclusion) = CF(premise) x CF(rule)?
-- [ ] 能正确使用组合公式 CF_combined = CF_1 + CF_2(1 - CF_1)?
-- [ ] 能在一道多规则题目中完成完整的 CF 计算链?
-- [ ] 能解释 WHY（backward style）和 HOW（forward style）查询分别揭示什么?
-- [ ] 能解释 E-MYCIN 的意义（第一个领域无关的推理外壳）?
-- [ ] 能列出 MYCIN 的局限性（knowledge acquisition bottleneck, brittleness, no learning）?
-- [ ] 能对比 Forward Chaining vs Backward Chaining 并解释 sufficient vs necessary?
-- [ ] 能解释 "IF A THEN B" 不代表 A 是 B 的唯一原因?
-- [ ] 知道 MYCIN 在 CF < 0.2 时放弃假设?
-- [ ] 知道 MYCIN 的评估结果（65% correct, comparable to specialists, never deployed clinically）?
-- [ ] 知道 LISP 的前缀表示法 (prefix notation)?
-- [ ] 能用 backward chaining 分析一个医学诊断场景（如 S1 2025 Q6 的 runny nose 例子）?
+## Self-Check Checklist
+
+- [ ] Can you explain in one sentence what MYCIN does and why it was historically important?
+- [ ] Can you list the four (or five) main components of MYCIN's architecture?
+- [ ] Can you calculate CF(conclusion) given premise CFs and a rule CF?
+- [ ] Do you know the difference between min() (for AND premises) and multiplication (for premise × rule)?
+- [ ] Can you explain forward vs backward chaining without looking at notes?
+- [ ] Can you walk through the 2025 Sample Q6 backward chaining example from memory?
+- [ ] Can you explain what WHY and HOW queries do and which direction each uses?
+- [ ] Can you explain what E-MYCIN is and why it was a breakthrough?
+- [ ] Do you understand why backward chaining does NOT prove uniqueness?
+- [ ] Can you compute CF through a multi-step chain of rules?

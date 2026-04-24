@@ -1,10 +1,17 @@
 [book]
-title = "exam-713"
+title = "COMPSCI 713 Mid-Term Exam Study Guide"
 authors = ["BriceLucifer"]
 language = "en"
+src = "src"
 
 [build]
 build-dir = "output"
 
 [output.html]
-mathjax-support = false
+default-theme = "light"
+preferred-dark-theme = "navy"
+mathjax-support = true
+
+[output.html.fold]
+enable = true
+level = 1

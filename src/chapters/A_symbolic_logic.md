@@ -1,739 +1,775 @@
-# Symbolic Logic -- Propositional & First-Order Logic
+# Symbolic Logic — Your Complete Exam Survival Guide
 
-## 🎯 Exam Importance
+## Exam Importance
 
-🔴 **GUARANTEED TO APPEAR** | Every single test paper has a logic question as Q1
+**MUST-KNOW** | Appeared in **4/4 past tests (100%)** | Worth 2--5 marks each time
 
-| Test Paper | Question | Marks | Sub-topics |
-|-----------|----------|-------|------------|
-| S1 2025 Sample Test | Q1 (3 marks / 15 total = 20%) | 1(a) Modus Tollens + De Morgan's on $(I \wedge F) \rightarrow E$; 1(b) FOL translation $\neg\forall x\, \text{Fly}(x)$ + example |
-| S1 2025 Actual Test | Q1 (2 marks / 15 total = 13%) | 1(a) Modus Tollens + De Morgan's on $(P \vee Q) \rightarrow R$; 1(b) FOL Modus Tollens with $\forall x(\text{Cheat}(x) \rightarrow \text{Disqualified}(x))$ |
-| S1 2026 Sample Test | Q1 (5 marks / 20 total = 25%) | 1(a) Same $(I \wedge F) \rightarrow E$ but **requires full truth table** (3 marks); 1(b) Same FOL $\neg\forall x\, \text{Fly}(x)$ |
+Let's be blunt: this topic appears on every single test. Not "most tests." Every. Single. One. The teacher loves it because it tests whether you can actually *reason*, not just memorise. If you walk into the exam without being able to do Modus Tollens in your sleep, you are giving away free marks.
 
-**Key observation:** The question has been worth 2--5 marks across papers, and the 2026 sample *tripled* the propositional logic marks by requiring a full truth table. Prepare for both approaches (algebraic deduction AND truth table verification).
+This chapter will teach you everything from scratch, walk you through every past paper question step by step, and give you enough practice that logic questions become automatic.
 
 ---
 
-## 📖 Core Concepts (Quick Reference Table)
+## Part 1 — What Is Logic, Really? (Building Intuition)
 
-| English Term | 中文 | One-line Definition |
-|-------------|------|-------------------|
-| Propositional Logic（命题逻辑） | 命题逻辑 | Deals with statements that are TRUE or FALSE, combined with logical connectives |
-| First-Order Logic / FOL（一阶逻辑） | 一阶逻辑 | Extends propositional logic with variables, quantifiers ($\forall$, $\exists$), predicates, and functions |
-| Atomic Proposition（原子命题） | 原子命题 | A basic statement with binary value: true or false (e.g., "It is raining") |
-| Connective（逻辑联结词） | 联结词 | Operators: $\neg$ (NOT), $\wedge$ (AND), $\vee$ (OR), $\rightarrow$ (IMPLIES), $\leftrightarrow$ (IFF) |
-| Interpretation（解释/赋值） | 解释 | A function $\pi$ that assigns true/false to every atomic proposition |
-| Tautology（重言式） | 重言式 | A formula that is true under every possible interpretation |
-| Logical Implication（逻辑蕴含） | 逻辑蕴含 | $A \Rightarrow B$: for every interpretation where A is true, B must also be true |
-| Logical Equivalence（逻辑等值） | 逻辑等值 | $A \Leftrightarrow B$: A and B have the same truth value under every interpretation |
-| Modus Ponens（肯定前件） | 肯定前件 | From $P$ and $P \rightarrow Q$, conclude $Q$ |
-| Modus Tollens（否定后件） | 否定后件 | From $P \rightarrow Q$ and $\neg Q$, conclude $\neg P$ |
-| Syllogism（三段论） | 三段论 | From $(A \rightarrow B)$ and $(B \rightarrow C)$, conclude $(A \rightarrow C)$ |
-| Material Implication（实质蕴含） | 实质蕴含 | $A \rightarrow B$ is false ONLY when A is true and B is false |
-| Vacuous Truth（空真） | 空真 | When the premise is false, implication is always true |
-| De Morgan's Laws（德摩根定律） | 德摩根律 | $\neg(A \wedge B) \equiv \neg A \vee \neg B$ and $\neg(A \vee B) \equiv \neg A \wedge \neg B$ |
-| Universal Quantifier（全称量词） | 全称量词 | $\forall x$: "for all x in the domain" |
-| Existential Quantifier（存在量词） | 存在量词 | $\exists x$: "there exists at least one x" |
-| Bound Variable（约束变量） | 约束变量 | A variable within the scope of a quantifier ($\forall x$ or $\exists x$) |
-| Free Variable（自由变量） | 自由变量 | A variable NOT within any quantifier's scope |
-| Sentence（语句） | 语句 | A formula with NO free variables |
-| Signature（签名） | 签名 | The vocabulary of a FOL language: its relation and function symbols |
-| Domain（论域） | 论域 | The set of objects that variables range over in a FOL interpretation |
+Imagine you are a security guard. Your boss gave you a rulebook:
+
+> "If the visitor has a valid ID **and** their fingerprint matches, let them in."
+
+One day, someone walks up. You deny them entry. Your boss calls and asks: "So what went wrong?"
+
+You answer: "Well, either they didn't have a valid ID, or their fingerprint didn't match. Maybe both."
+
+Congratulations — you just did **propositional logic**. You took a rule, observed that the *outcome didn't happen*, and worked backward to figure out what must have been wrong with the *inputs*.
+
+That is literally what every Question 1a on this exam asks you to do. Every time. Let's make sure you can do it perfectly.
+
+### The Five Connectives — Your Toolkit
+
+Before we do anything fancy, you need to know the five logical connectives like you know your own name:
+
+| Symbol | Name | Plain English | Example |
+|--------|------|---------------|---------|
+| ¬ | NOT | "it is not the case that..." | ¬P = "P is false" |
+| ∧ | AND | "both ... and ..." | P ∧ Q = "P is true and Q is true" |
+| ∨ | OR | "at least one of ..." | P ∨ Q = "P is true, or Q is true, or both" |
+| → | IMPLIES | "if ... then ..." | P → Q = "if P then Q" |
+| ↔ | IFF | "if and only if" | P ↔ Q = "P and Q are both true, or both false" |
+
+**Stop and think**: the OR in logic is *inclusive* — "P or Q" means "at least one of them," not "exactly one." If both are true, P ∨ Q is still true. This is different from how we use "or" in everyday English ("Would you like tea or coffee?" usually means pick one). In logic, the answer "both" is fine.
 
 ---
 
-## 🧠 Feynman Draft -- Learning From Scratch
+## Part 2 — The Truth Table for Implication (The Thing That Confuses Everyone)
 
-### Part 1: Propositional Logic
+Here is the truth table you absolutely must memorise:
 
-Imagine you are a security guard at a building entrance. Your job manual has simple rules written as "if... then..." statements. Each fact is either TRUE or FALSE -- no grey areas, no "maybe." Your entire job is to follow the rules and figure out what must be true.
-
-For example, your manual says:
-
-> "If the person has a valid ID **and** their fingerprint matches, then grant entry."
-
-In symbols: $(I \wedge F) \rightarrow E$
-
-Now, suppose today the person was **denied entry** ($\neg E$). What can you figure out?
-
-Think of it this way: the rule promises that having both ID and fingerprint match **guarantees** entry. The person was NOT granted entry. So the guarantee must not have kicked in -- meaning they did NOT have both. Either no valid ID, or no fingerprint match, or both were missing.
-
-This reasoning is called **Modus Tollens（否定后件）**: if the consequence didn't happen, the premise couldn't have been fully satisfied.
-
-$$P \rightarrow Q, \quad \neg Q \quad \Longrightarrow \quad \neg P$$
-
-**But wait -- what does "not both" mean precisely?**
-
-$\neg(I \wedge F)$ means "it's not the case that BOTH are true." By **De Morgan's Law**, this equals $\neg I \vee \neg F$ -- "at least one of them is false."
-
-This is exactly how every exam question on this topic works. Every. Single. One.
-
-### Part 2: The Implication Trap
-
-Here is the single most confusing thing in propositional logic, and the lecture opens with it:
-
-> "If it rains today, I will bring an umbrella." ($P \rightarrow Q$)
->
-> You see the person carrying an umbrella ($Q$ is true). Can you conclude it is raining ($P$)?
-
-**NO!** $Q \rightarrow P$ is NOT the same as $P \rightarrow Q$. The person might just like carrying umbrellas. This mistake is called **Affirming the Consequent（肯定后件谬误）** -- the lecture slide 4-5 opens with exactly this example.
-
-Here is the full truth table for implication:
-
-| $P$ | $Q$ | $P \rightarrow Q$ |
-|-----|-----|------------------|
+| P | Q | P → Q |
+|---|---|-------|
 | T | T | **T** |
-| T | F | **F** $\leftarrow$ the ONLY row where it's false |
-| F | T | **T** $\leftarrow$ vacuous truth |
-| F | F | **T** $\leftarrow$ vacuous truth |
+| T | F | **F** |
+| F | T | **T** |
+| F | F | **T** |
 
-The key insight: **$P \rightarrow Q$ is false ONLY when P is true and Q is false.**
+The second row is the easy one: if P is true and Q is false, the implication is broken. Makes sense — "if it rains, the ground gets wet" is clearly false when it rains and the ground is dry.
 
-Why is $\text{false} \rightarrow \text{anything}$ true? Think of it as a promise: "If it rains, I'll bring an umbrella." If it doesn't rain, I haven't broken my promise regardless of whether I carry an umbrella. The promise is only broken when rain happens and no umbrella appears.
+But those last two rows trip up almost everyone. **Why is P → Q true when P is false?**
 
-> ⚠️ **Common Misconception**: Students think $P \rightarrow Q$ means "P causes Q" or "P and Q are related." It does NOT. Material implication is purely about truth values. "If pigs fly, then I am the Queen of England" is technically TRUE because the premise is false. This is called **vacuous truth（空真）**.
+This is called **vacuous truth**, and let me give you three different ways to understand it, because this concept is worth getting right:
 
-### Part 3: First-Order Logic
+### Analogy 1 — The Unkept Promise
 
-Propositional logic treats facts as indivisible boxes -- "it is raining" is one atomic unit. But what if you need to say something about *many* things at once?
+Your friend says: "If it snows in Auckland tomorrow, I will buy you a Ferrari."
 
-Imagine you are a biologist studying birds. You want to express: "Not all birds in this region can fly." In propositional logic, you would need a separate proposition for each bird -- $\text{Fly}(\text{robin})$, $\text{Fly}(\text{kiwi})$, $\text{Fly}(\text{penguin})$, etc. If you have 1000 birds, you need 1000 propositions. This is the **verbosity problem（冗余问题）**.
+It does not snow. Did your friend break their promise? No. They never had to do anything. The promise was never activated. In logic, we say the implication holds *vacuously* — it is true by default because the condition was never met.
 
-First-order logic fixes this by introducing:
-- **Objects**: things in your world (birds, people, squares in Wumpus World)
-- **Predicates** (relations): properties of objects ($\text{Fly}(x)$, $\text{Pit}(x,y)$)
-- **Functions**: mappings from objects to objects ($\text{left}(x,y)$, $\text{fatherOf}(x)$)
-- **Quantifiers**: $\forall$ ("for all") and $\exists$ ("there exists")
+### Analogy 2 — The Unbreakable Contract
 
-So "Not all birds can fly" becomes simply: $\neg \forall x\, \text{Fly}(x)$
+Think of P → Q as a contract. The contract says: "Whenever P happens, Q must follow." The only way to *break* the contract is for P to happen and Q to NOT follow. If P never happens, the contract was never violated. An unviolated contract is a valid contract.
 
-Which is equivalent to: $\exists x\, \neg\text{Fly}(x)$ -- "there exists a bird that cannot fly."
+### Analogy 3 — The Quality Control Inspector
 
-> ⚠️ **Common Misconception**: Students write $\forall x\, \neg\text{Fly}(x)$ for "not all birds fly." This is WRONG -- it means "NO bird can fly" (way too strong). The negation must go OUTSIDE the quantifier: $\neg\forall x\, \text{Fly}(x)$.
+An inspector checks products with the rule: "If a product is labelled Premium, it must weigh over 500g." She picks up a product labelled Standard (P is false). Does she need to weigh it? No. The rule does not apply. The rule is not violated. It holds.
 
-> ⚠️ **Common Misconception**: With $\forall$, use $\rightarrow$ (implication) not $\wedge$. "Every student cheats" is $\forall x (\text{Student}(x) \rightarrow \text{Cheat}(x))$, NOT $\forall x (\text{Student}(x) \wedge \text{Cheat}(x))$. The latter says "everything is both a student AND a cheater" -- it claims your dog is a cheating student!
+**The bottom line**: P → Q is false in exactly ONE case — when P is true and Q is false. In ALL other cases, it is true. Burn this into your brain.
 
-> 💡 **Core Intuition**: Propositional logic is about combining true/false statements with connectives; FOL adds the power to talk about "all" and "some" objects in a domain using quantifiers and predicates.
+> **Common Misconception**: Students often write "undefined" or "cannot determine" for the F→T and F→F rows. This will lose you marks. The answer is T in both cases. Always.
 
 ---
 
-## 📐 Formal Definitions
+## Part 3 — Modus Ponens vs Modus Tollens (Forward vs Backward Reasoning)
 
-### Propositional Logic -- Complete Syntax and Semantics
+These are the two most important inference rules. Let's understand them deeply.
 
-**Syntax (from lecture slide 15):**
+### Modus Ponens — "The Forward Rule"
 
-- **Atomic propositions** (atoms): $\text{Atom} = \{X_1, \ldots, X_k\}$, each with domain $\{\text{true}, \text{false}\}$ (or $\{0, 1\}$).
-- **Compound propositions** are built using connectives:
-  $\neg A$, $(A \vee B)$, $(A \wedge B)$, $(A \rightarrow B)$, $(A \leftarrow B)$, $(A \leftrightarrow B)$
+```
+Given:  P → Q      (the rule)
+Given:  P           (the premise is true)
+─────────────────
+Conclude: Q         (so the conclusion must be true)
+```
 
-**Semantics:**
+This is intuitive. "If it rains, the ground gets wet. It rained. Therefore the ground is wet." Nobody struggles with this.
 
-An **interpretation** $\pi : \text{Atom} \rightarrow \{\text{true}, \text{false}\}$ assigns truth values to all atoms. The truth value of any compound proposition is determined by the following table:
+### Modus Tollens — "The Backward Rule" (THIS IS THE EXAM FAVOURITE)
 
-### Master Truth Table (MEMORIZE THIS)
+```
+Given:  P → Q      (the rule)
+Given:  ¬Q          (the conclusion is FALSE)
+─────────────────
+Conclude: ¬P        (so the premise must have been FALSE)
+```
 
-| $A$ | $B$ | $\neg A$ | $A \wedge B$ | $A \vee B$ | $A \rightarrow B$ | $A \leftarrow B$ | $A \leftrightarrow B$ |
-|-----|-----|---------|-------------|-----------|------------------|------------------|---------------------|
-| T | T | F | T | T | **T** | T | T |
-| T | F | F | F | T | **F** | T | F |
-| F | T | T | F | T | **T** | F | F |
-| F | F | T | F | F | **T** | T | T |
+Think about why this works. Look at the truth table again:
 
-Key observations:
-- $A \rightarrow B$ is false ONLY in row 2 (A true, B false)
-- $A \leftrightarrow B$ is true when A and B have the SAME value
-- $A \leftarrow B$ is the "reverse implication" ($B \rightarrow A$)
+| P | Q | P → Q |
+|---|---|-------|
+| T | T | T |
+| T | F | **F** |
+| F | T | T |
+| F | F | T |
 
-### Complete Logical Equivalence Laws (from lecture slide 22)
+We are told P → Q is true (it is a given rule). We are told Q is false (¬Q). Look at the rows where Q is false — that is rows 2 and 4. In row 2, P → Q is **false**, but we were told the rule is true, so row 2 is impossible. That leaves only row 4, where P is false. Therefore ¬P.
 
-**These are your tools for algebraic manipulation. The exam requires you to cite which law you use.**
+That is the proof. That is why Modus Tollens works. The exam will never ask you to prove it, but understanding *why* it works means you will never forget *how* to use it.
 
-| Law Name | Equivalence |
-|----------|------------|
-| **Double Negation** | $\neg\neg A \Leftrightarrow A$ |
-| **Commutative** | $(A \wedge B) \Leftrightarrow (B \wedge A)$; $(A \vee B) \Leftrightarrow (B \vee A)$ |
-| **Associative** | $(A \wedge (B \wedge C)) \Leftrightarrow ((A \wedge B) \wedge C)$; same for $\vee$ |
-| **Distributive** | $(A \wedge (B \vee C)) \Leftrightarrow ((A \wedge B) \vee (A \wedge C))$; $(A \vee (B \wedge C)) \Leftrightarrow ((A \vee B) \wedge (A \vee C))$ |
-| **Idempotent** | $(A \wedge A) \Leftrightarrow A$; $(A \vee A) \Leftrightarrow A$ |
-| **De Morgan's** | $\neg(A \wedge B) \Leftrightarrow (\neg A \vee \neg B)$; $\neg(A \vee B) \Leftrightarrow (\neg A \wedge \neg B)$ |
-| **Implication** | $(A \rightarrow B) \Leftrightarrow (\neg A \vee B)$; $(A \rightarrow B) \Leftrightarrow (\neg A \wedge \neg B) \vee B$ ... simplified: $\neg A \vee B$ |
-| **Contrapositive** | $(A \rightarrow B) \Leftrightarrow (\neg B \rightarrow \neg A)$ |
-| **Contradiction** | $(A \vee (B \wedge \neg B)) \Leftrightarrow A$ |
-| **Absorption** | $A \Leftrightarrow (A \wedge (A \vee B))$; $A \Leftrightarrow (A \vee (A \wedge B))$ |
-| **Equivalence** | $(A \leftrightarrow B) \Leftrightarrow ((A \rightarrow B) \wedge (B \rightarrow A))$; $(A \leftrightarrow B) \Leftrightarrow ((A \wedge B) \vee (\neg A \wedge \neg B))$ |
+### When to use which?
 
-### Logical Implication vs. Material Implication
+| You have... | You use... | You get... |
+|---|---|---|
+| P → Q and P | Modus Ponens | Q |
+| P → Q and ¬Q | **Modus Tollens** | **¬P** |
 
-This distinction is subtle and important (lecture slide 21):
+On this exam, the teacher always gives you a rule and a **negated** conclusion. That means Modus Tollens. Every time. In 4 out of 4 papers.
 
-- **Material implication** ($A \rightarrow B$): a connective inside a formula. It has a truth value.
-- **Logical implication** ($A \Rightarrow B$): a meta-statement about formulas. It means: for EVERY interpretation $\pi$, if $\pi(A) = \text{true}$ then $\pi(B) = \text{true}$.
+### Two Dangerous Fallacies (Things That LOOK Like Valid Reasoning But Are NOT)
 
-**Verification methods:**
-1. Truth table: check that every row where A is true also has B true
-2. Equivalent test: $A \Rightarrow B$ if and only if $A \rightarrow B$ is a tautology
+| Fallacy | Pattern | Why It Is Wrong |
+|---------|---------|-----------------|
+| **Affirming the consequent** | P → Q, Q, therefore P | Other things could cause Q! |
+| **Denying the antecedent** | P → Q, ¬P, therefore ¬Q | Q might be true for other reasons! |
 
-### Key Inference Rules (from lecture slide 21)
+Example of affirming the consequent: "If it rains, the ground is wet. The ground IS wet. Therefore it rained." WRONG — the sprinkler could be on.
 
-$$\text{Modus Ponens: } ((A \rightarrow B) \wedge A) \Rightarrow B$$
+Example of denying the antecedent: "If it rains, the ground is wet. It did NOT rain. Therefore the ground is NOT wet." WRONG — again, sprinkler.
 
-$$\text{Modus Tollens: } ((A \rightarrow B) \wedge \neg B) \Rightarrow \neg A$$
-
-$$\text{Syllogism: } ((A \rightarrow B) \wedge (B \rightarrow C)) \Rightarrow (A \rightarrow C)$$
-
-### First-Order Logic -- Complete Syntax and Semantics
-
-**Three building blocks** (lecture slide 25):
-1. **Objects**: people, houses, numbers, grid squares, ...
-2. **Relations (Predicates)**: properties or relationships -- unary ($\text{Red}(x)$), binary ($\text{Adjacent}(x,y)$), n-ary
-3. **Functions**: mappings that produce objects -- $\text{fatherOf}(x)$, $\text{left}(x,y)$
-
-**Signature** (lecture slide 29): the vocabulary $S = \{R_1, \ldots, R_k, f_1, \ldots, f_\ell\}$ -- the set of relation and function symbols.
-
-**Terms** (lecture slide 29):
-- Every variable is a term: $x, y, z$
-- Every constant is a term: $1, 2, \text{Alice}$ (a constant is a 0-ary function)
-- If $f$ is a function of arity $r$ and $t_0, \ldots, t_{r-1}$ are terms, then $f(t_0, \ldots, t_{r-1})$ is a term
-- A **ground term** has no variables (all constants/applied functions on constants)
-
-**Formulas** (lecture slide 30):
-- **Atomic**: $t_0 = t_1$ (equality) or $R(t_0, \ldots, t_{n-1})$ (predicate applied to terms)
-- **Compound**: built from atomic formulas using $\neg, \wedge, \vee, \rightarrow, \leftrightarrow$ and quantifiers $\forall x, \exists x$
-
-**Free vs. Bound Variables** (lecture slide 32):
-- A variable $x$ is **bound** if it appears within $\forall x : \varphi$ or $\exists x : \varphi$
-- A variable $x$ is **free** if it is not within any quantifier's scope
-- A **sentence** is a formula with NO free variables
-
-**Satisfaction Relation** (lecture slide 33): $I \vDash \varphi$ means interpretation $I$ satisfies formula $\varphi$:
-- $I \vDash \forall x : \varphi$ iff for ALL $a \in D$, $I[x/a] \vDash \varphi$
-- $I \vDash \exists x : \varphi$ iff there is SOME $a \in D$ such that $I[x/a] \vDash \varphi$
-
-### Quantifier Negation Laws (De Morgan's for Quantifiers)
-
-$$\neg \forall x\, \varphi(x) \equiv \exists x\, \neg\varphi(x)$$
-$$\neg \exists x\, \varphi(x) \equiv \forall x\, \neg\varphi(x)$$
-
-Additional FOL equivalences (lecture slide 34):
-$$\neg\neg\exists x : \varphi(x) \equiv \forall x : \neg\varphi(x) \quad [\text{Double negation + quantifier swap}]$$
-$$\exists x : (\varphi_1(x) \vee \varphi_2(x)) \equiv (\exists x : \varphi_1(x)) \vee (\exists x : \varphi_2(x))$$
-$$\forall x : (\varphi_1(x) \wedge \varphi_2(x)) \equiv (\forall x : \varphi_1(x)) \wedge (\forall x : \varphi_2(x))$$
-$$\neg\forall x : (\varphi_1(x) \rightarrow \varphi_2(x)) \equiv \exists x : (\varphi_1(x) \wedge \neg\varphi_2(x))$$
+If you catch yourself doing either of these on the exam, stop immediately. They are traps.
 
 ---
 
-## 🔄 Mechanisms & Derivations -- The Exam Algorithms
+## Part 4 — De Morgan's Laws (The AND/OR Flip)
 
-### Algorithm 1: Modus Tollens with De Morgan's (The Core Exam Pattern)
+When you apply Modus Tollens and the antecedent is a compound expression (like P ∧ Q or P ∨ Q), you need De Morgan's Laws to simplify ¬(P ∧ Q) or ¬(P ∨ Q).
 
-This is the algorithm you will execute in 100% of logic exam questions. Master it completely.
+Here they are:
 
-**Input:** A rule $P \rightarrow Q$ and an observation $\neg Q$
+```
+¬(A ∧ B)  =  ¬A ∨ ¬B       "not both" = "at least one is missing"
+¬(A ∨ B)  =  ¬A ∧ ¬B       "neither"  = "both are absent"
+```
 
-**Steps:**
-1. **Identify the structure**: What is $P$? What is $Q$? (P is often compound, e.g., $I \wedge F$ or $P \vee Q$)
-2. **Apply Modus Tollens**: From $P \rightarrow Q$ and $\neg Q$, conclude $\neg P$
-3. **Simplify $\neg P$** using De Morgan's Law:
-   - If $P = (A \wedge B)$: $\neg(A \wedge B) = \neg A \vee \neg B$ ("at least one is false")
-   - If $P = (A \vee B)$: $\neg(A \vee B) = \neg A \wedge \neg B$ ("BOTH are false")
-4. **State the conclusion in natural language**
+### Memory Trick: "The NOT goes in, the connector FLIPS"
 
-### Algorithm 2: Truth Table Verification (Required in S1 2026 Sample)
+When you push the negation inside the parentheses:
+- ∧ becomes ∨
+- ∨ becomes ∧
 
-The 2026 sample test explicitly asks "Show your steps (Truth Table) clearly" for 3 marks. Here is the exact procedure:
+Think of it like a see-saw. NOT pushes down, and the connector flips to the other side.
 
-**Step 1:** Write the truth table for $X \rightarrow E$ where $X = I \wedge F$ (1 mark):
+### Another Memory Trick: English Translation
 
-| $X$ ($I \wedge F$) | $E$ | $X \rightarrow E$ |
+- ¬(A ∧ B): "It's NOT the case that BOTH are true" = "At least one is false" = ¬A ∨ ¬B
+- ¬(A ∨ B): "It's NOT the case that EITHER is true" = "NEITHER is true" = ¬A ∧ ¬B
+
+Say it in English first, and the formula writes itself.
+
+### The Critical Pattern on Exams
+
+Here is what happens on every test, combined:
+
+```
+Step 1: You have a rule like (X ∧ Y) → Z  or  (X ∨ Y) → Z
+Step 2: You are told ¬Z
+Step 3: Modus Tollens gives you ¬(X ∧ Y)  or  ¬(X ∨ Y)
+Step 4: De Morgan's simplifies:
+        ¬(X ∧ Y) = ¬X ∨ ¬Y    (at least one failed)
+        ¬(X ∨ Y) = ¬X ∧ ¬Y    (BOTH failed)
+Step 5: State the conclusion in English
+```
+
+Notice the crucial difference in Step 4:
+- If the original used AND: the conclusion uses OR ("at least one failed")
+- If the original used OR: the conclusion uses AND ("both failed")
+
+Students under time pressure frequently forget the flip and lose marks. Do not be that student.
+
+---
+
+## Part 5 — Every Past Paper Question, Solved Step by Step
+
+Let's walk through every single logic question that has appeared on past tests. I will explain each step as if you have never seen the problem before.
+
+### Past Paper 1: 2026 Sample Test, Q1a (3 marks)
+
+**The question:**
+
+> In a secure facility, a person is granted entry only if they provide both a valid ID and a fingerprint match.
+> 
+> I: The person has a valid ID
+> F: The fingerprint matches
+> E: The person is granted entry
+> 
+> Rule: (I ∧ F) → E
+> Observation: The person was not granted entry (¬E).
+> 
+> Use propositional logic to deduce what must be true about I and F. Show your steps (Truth Table) clearly. **[3 marks]**
+
+**Let's solve this together, step by step.**
+
+This is worth 3 marks — the most this question type has ever been worth. The model answer shows us exactly what the teacher wants: a truth table approach.
+
+**Step 1 — Apply Modus Tollens (1 mark)**
+
+We have:
+- Rule: (I ∧ F) → E
+- Observation: ¬E
+
+Let X = (I ∧ F). Then our rule is X → E, and we know ¬E.
+
+By Modus Tollens: ¬E implies ¬X, which means ¬(I ∧ F).
+
+Here is the key insight for the 3-mark version: the teacher wants you to show *why* via a truth table. Let me show you the truth table of X → E:
+
+| X (= I ∧ F) | E | X → E |
 |---|---|---|
 | 0 | 0 | 1 |
 | 0 | 1 | 1 |
-| 1 | 0 | **0** $\leftarrow$ violates the rule |
+| 1 | 0 | **0** |
 | 1 | 1 | 1 |
 
-**Step 2:** Since $\neg E$ (E = 0) and $X \rightarrow E$ must be true, look at rows where E = 0. Only row 1 satisfies both conditions. Therefore $X = I \wedge F = 0$ (1 mark).
+We are told X → E is true (it is our rule) and E = 0 (our observation). Look at the rows where E = 0: that is rows 1 and 3. Row 3 has X → E = 0, which contradicts our rule being true. So only row 1 is possible, where X = 0. Therefore I ∧ F = 0.
 
-**Step 3:** Write the truth table for $I \wedge F$ to determine what $I \wedge F = 0$ means (1 mark):
+**Step 2 — Show the truth table of I ∧ F to determine what I and F can be (1 mark)**
 
-| $I$ | $F$ | $I \wedge F$ |
-|---|---|---|
-| 0 | 0 | 0 ✓ |
-| 0 | 1 | 0 ✓ |
-| 1 | 0 | 0 ✓ |
-| 1 | 1 | 1 ✗ |
+Now we know I ∧ F = 0. What does that tell us about I and F individually?
 
-**Conclusion:** At least one of I, F must be 0. The person either didn't have valid ID, or fingerprint didn't match (or both).
+| I | F | I ∧ F |
+|---|---|-------|
+| 0 | 0 | 0 |
+| 0 | 1 | 0 |
+| 1 | 0 | 0 |
+| 1 | 1 | 1 |
 
-### Algorithm 3: FOL Translation
+Since I ∧ F must be 0, any of the first three rows is possible. The only row eliminated is (I=1, F=1). So: at least one of I or F must be 0.
 
-**Input:** An English sentence
+This is exactly De Morgan's Law: ¬(I ∧ F) = ¬I ∨ ¬F.
 
-**Steps:**
-1. **Identify the domain**: What set of objects are we talking about?
-2. **Define predicates**: What properties/relations are relevant?
-3. **Identify the quantifier**: "all"/"every" $\rightarrow$ $\forall$; "some"/"exists"/"not all" $\rightarrow$ involves $\exists$
-4. **Construct the formula**:
-   - "Every X that has property A also has property B" $\rightarrow$ $\forall x\, (A(x) \rightarrow B(x))$
-   - "Not all X have property A" $\rightarrow$ $\neg\forall x\, A(x)$ or equivalently $\exists x\, \neg A(x)$
-   - "Some X has property A" $\rightarrow$ $\exists x\, A(x)$
-5. **Verify**: Read the formula back in English to check
+**Step 3 — State the conclusion in English (1 mark)**
 
-### Algorithm 4: FOL Modus Tollens (S1 2025 Actual Test Pattern)
+"The person either did not have a valid ID (¬I), or the fingerprint did not match (¬F), or both."
 
-**Input:** A universal rule $\forall x\, (P(x) \rightarrow Q(x))$ and a fact $\neg Q(a)$ for a specific object $a$
+**Full model answer to write on the exam (3-mark version):**
 
-**Steps:**
-1. **Universal Instantiation**: From $\forall x\, (P(x) \rightarrow Q(x))$, substitute $x = a$:
-   $P(a) \rightarrow Q(a)$
-2. **Apply Modus Tollens**: From $P(a) \rightarrow Q(a)$ and $\neg Q(a)$, conclude $\neg P(a)$
-3. **State conclusion**: Object $a$ does not have property P
-
----
-
-## ⚖️ Trade-offs & Comparisons
-
-### Propositional Logic vs First-Order Logic
-
-| Aspect | Propositional Logic | First-Order Logic |
-|--------|-------------------|------------------|
-| **Building blocks** | Atomic propositions (P, Q, R) | Objects, predicates, functions, quantifiers |
-| **Expressiveness** | LOW -- can't say "for all" or "there exists" | HIGH -- quantifiers over objects |
-| **Decidability** | Always decidable (finite truth table) | Semi-decidable (may not terminate) |
-| **Verbosity** | HIGH for real-world domains (need one prop per fact) | LOW -- one formula can express rules about all objects |
-| **Use in AI** | Simple rule engines, circuit design, Wumpus World basics | Knowledge bases, expert systems, theorem proving |
-| **Example** | $(I \wedge F) \rightarrow E$ | $\forall x\, (\text{Student}(x) \rightarrow \text{HasExam}(x))$ |
-
-### Modus Ponens vs Modus Tollens vs Converse Error
-
-| | Modus Ponens | Modus Tollens | Converse Error (INVALID!) |
-|---|---|---|---|
-| **Given** | $P \rightarrow Q$ and $P$ | $P \rightarrow Q$ and $\neg Q$ | $P \rightarrow Q$ and $Q$ |
-| **Conclude** | $Q$ ✅ | $\neg P$ ✅ | $P$ ❌ WRONG |
-| **Direction** | Forward reasoning | Backward reasoning | Fallacy |
-| **Example** | Rain $\rightarrow$ Wet. Rain. $\therefore$ Wet. | Rain $\rightarrow$ Wet. Not wet. $\therefore$ Not rain. | Rain $\rightarrow$ Wet. Wet. $\therefore$ Rain?? (sprinkler!) |
-| **Exam status** | Not directly tested | Tested EVERY exam | Tested as motivation (lecture slide 4-5) |
-
-### De Morgan's: $\wedge$ vs $\vee$ Negation
-
-| Original | Negated | Result | Intuition |
-|----------|---------|--------|-----------|
-| $A \wedge B$ (both true) | $\neg(A \wedge B)$ | $\neg A \vee \neg B$ (at least one false) | Breaking an AND gives OR |
-| $A \vee B$ (at least one true) | $\neg(A \vee B)$ | $\neg A \wedge \neg B$ (both false) | Breaking an OR gives AND |
-
-> **Memory trick**: negation "flips" the connective ($\wedge \leftrightarrow \vee$) and negates each operand.
-
-### $\forall$ with $\rightarrow$ vs $\exists$ with $\wedge$ (Critical FOL Pattern)
-
-| Statement | Correct FOL | Common WRONG Version | Why wrong |
-|-----------|------------|---------------------|-----------|
-| "Every student is enrolled" | $\forall x\, (\text{Student}(x) \rightarrow \text{Enrolled}(x))$ | $\forall x\, (\text{Student}(x) \wedge \text{Enrolled}(x))$ | Claims everything in domain is both a student AND enrolled |
-| "Some student is happy" | $\exists x\, (\text{Student}(x) \wedge \text{Happy}(x))$ | $\exists x\, (\text{Student}(x) \rightarrow \text{Happy}(x))$ | Vacuously true for any non-student object |
-
-> **Rule of thumb**: $\forall$ pairs with $\rightarrow$; $\exists$ pairs with $\wedge$.
-
----
-
-## 🏗️ Design Question Framework
-
-If asked to model a scenario using symbolic logic:
-
-**WHAT**: Define the propositions/predicates and their English meanings
-- List each atomic proposition or predicate with a clear one-line definition
-- Specify the domain for FOL
-
-**WHY**: Why use formal logic here?
-- Precise and unambiguous (unlike natural language)
-- Machine-verifiable (automated reasoning)
-- Supports inference: derive new facts from existing rules
-
-**HOW**: Write the rules as logical formulas
-- Express each rule using connectives and quantifiers
-- Show at least one inference step (Modus Ponens or Modus Tollens)
-
-**TRADE-OFF**: Discuss limitations
-- Propositional logic: verbose, can't express "for all"
-- FOL: more expressive but semi-decidable
-- Both: can't handle uncertainty (need fuzzy logic / LNN for soft values)
-
-**EXAMPLE**: Demonstrate with a concrete instance
-- Show a specific inference with your rules
-
----
-
-## 📝 Exam Questions -- Complete Collection with Model Answers
-
-### ===== EXAM Q1: S1 2025 Sample Test Q1(a) -- 1 mark =====
-
-**Question:** In a secure facility, $(I \wedge F) \rightarrow E$. The person was not granted entry ($\neg E$). Deduce what must be true about I and F.
-
-**Model Answer:**
-
-> Given: $(I \wedge F) \rightarrow E$ and $\neg E$.
->
-> By Modus Tollens: $\neg E \Rightarrow \neg(I \wedge F)$.
->
-> By De Morgan's Law: $\neg(I \wedge F) \equiv \neg I \vee \neg F$.
->
-> **Conclusion:** The person either did not have a valid ID ($\neg I$) or the fingerprint did not match ($\neg F$), or both.
-
-**Marking note:** 1 mark for correct application of Modus Tollens + De Morgan's + stating conclusion.
-
----
-
-### ===== EXAM Q2: S1 2025 Sample Test Q1(b)(i) -- 1 mark =====
-
-**Question:** A biologist claims "Not all birds in this region can fly." Domain: all birds in the region. $\text{Fly}(x)$ = bird x can fly. Write in FOL.
-
-**Model Answer:**
-
-> $$\neg \forall x\, \text{Fly}(x)$$
->
-> Equivalently: $\exists x\, \neg\text{Fly}(x)$
-
-**Marking note:** Either form accepted for full mark.
-
----
-
-### ===== EXAM Q3: S1 2025 Sample Test Q1(b)(ii) -- 1 mark =====
-
-**Question:** Provide a realistic example (one sentence) that would make the statement true.
-
-**Model Answer:**
-
-> "There is a penguin in this region, and penguins cannot fly."
-
-**Marking note:** Any concrete example naming a flightless bird (penguin, kiwi, ostrich, emu) is acceptable.
-
----
-
-### ===== EXAM Q4: S1 2025 Actual Test Q1(a) -- 1 mark =====
-
-**Question:** In a smart office, $(P \vee Q) \rightarrow R$. The alarm did not sound ($\neg R$). Deduce what must be true about P and Q.
-
-Where: P = door is open, Q = motion sensor triggered, R = alarm sounds.
-
-**Model Answer:**
-
-> Given: $(P \vee Q) \rightarrow R$ and $\neg R$.
->
-> By Modus Tollens: $\neg R \Rightarrow \neg(P \vee Q)$.
->
-> By De Morgan's Law: $\neg(P \vee Q) \equiv \neg P \wedge \neg Q$.
->
-> **Conclusion:** The door was NOT open AND the motion sensor was NOT triggered. (Both must be false.)
-
-**Critical difference from the sample test:** Here the premise uses $\vee$ (OR), so De Morgan's produces $\wedge$ (AND). The conclusion is STRONGER: BOTH P and Q must be false (not just "at least one").
-
-| Premise Connective | After De Morgan's | Conclusion Strength |
-|---|---|---|
-| $A \wedge B$ (AND) | $\neg A \vee \neg B$ | At least one is false |
-| $A \vee B$ (OR) | $\neg A \wedge \neg B$ | BOTH are false |
-
----
-
-### ===== EXAM Q5: S1 2025 Actual Test Q1(b) -- 1 mark =====
-
-**Question:** $\forall x\, (\text{Cheat}(x) \rightarrow \text{Disqualified}(x))$. Alice is not disqualified. Did Alice cheat?
-
-**Model Answer:**
-
-> From the universal rule: $\forall x\, (\text{Cheat}(x) \rightarrow \text{Disqualified}(x))$
->
-> Instantiate for Alice: $\text{Cheat}(\text{Alice}) \rightarrow \text{Disqualified}(\text{Alice})$
->
-> Given: $\neg\text{Disqualified}(\text{Alice})$
->
-> By Modus Tollens: $\neg\text{Disqualified}(\text{Alice}) \Rightarrow \neg\text{Cheat}(\text{Alice})$
->
-> **Conclusion:** Alice did not cheat.
-
-**Key steps for marks:** (1) Universal instantiation, (2) Modus Tollens, (3) Conclusion in English.
-
----
-
-### ===== EXAM Q6: S1 2026 Sample Test Q1(a) -- 3 marks =====
-
-**Question:** SAME scenario as 2025 sample $(I \wedge F) \rightarrow E$, $\neg E$, but now **explicitly requires truth table** for 3 marks.
-
-**Model Answer:**
-
-> **Step 1 (1 mark):** Let $X = I \wedge F$. Truth table for $X \rightarrow E$:
->
-> | $X$ ($I \wedge F$) | $E$ | $X \rightarrow E$ |
+> Given: (I ∧ F) → E and ¬E.
+> 
+> The truth table for X → E (where X = I ∧ F):
+> 
+> | X (I ∧ F) | E | X → E |
 > |---|---|---|
 > | 0 | 0 | 1 |
 > | 0 | 1 | 1 |
 > | 1 | 0 | 0 |
 > | 1 | 1 | 1 |
->
-> **Step 2 (1 mark):** Since $E = 0$ and $X \rightarrow E$ is true (given the rule holds), the only valid row is row 1 where $X = 0$. Therefore $I \wedge F = 0$.
->
-> Truth table for $I \wedge F$:
->
-> | $I$ | $F$ | $I \wedge F$ |
+> 
+> Since E = 0 and X → E must be true, X = I ∧ F must be 0.
+> 
+> The truth table for I ∧ F:
+> 
+> | I | F | I ∧ F |
 > |---|---|---|
-> | 0 | 0 | 0 ✓ |
-> | 0 | 1 | 0 ✓ |
-> | 1 | 0 | 0 ✓ |
-> | 1 | 1 | 1 ✗ |
->
-> **Step 3 (1 mark):** Since $I \wedge F = 0$, at least one of $I$ or $F$ must be 0.
->
-> **Conclusion:** The person either did not have a valid ID or the fingerprint did not match (or both).
+> | 0 | 0 | 0 |
+> | 0 | 1 | 0 |
+> | 1 | 0 | 0 |
+> | 1 | 1 | 1 |
+> 
+> Since I ∧ F = 0, we have ¬I ∨ ¬F (by De Morgan's Law).
+> 
+> **Conclusion**: The person either did not have a valid ID or the fingerprint did not match (or both).
 
 ---
 
-### ===== EXAM Q7: S1 2026 Sample Test Q1(b) -- 2 marks =====
+### Past Paper 2: 2025 Sample Test, Q1a (1 mark)
 
-Identical to S1 2025 Sample Q1(b). Same answers apply:
-- (i) $\neg\forall x\, \text{Fly}(x)$ [1 mark]
-- (ii) "There is a penguin in this region, and penguins cannot fly." [1 mark]
+**The question:** Exact same scenario as above — (I ∧ F) → E, given ¬E — but only **1 mark**.
 
----
+**Here is the trick most students miss**: when the question is worth only 1 mark, you do NOT need to draw truth tables. The teacher just wants to see that you know Modus Tollens and De Morgan's. Quick and clean.
 
-### ===== LECTURE MOTIVATION QUESTION (potential exam question) =====
+**Full model answer to write on the exam (1-mark version):**
 
-**Question (slide 4-5):** "If it rains, I bring an umbrella" ($P \rightarrow Q$). You see the person with an umbrella ($Q$). Can you conclude it is raining ($P$)?
+> Given (I ∧ F) → E and ¬E, apply Modus Tollens: ¬E → ¬(I ∧ F).
+> By De Morgan's Law: ¬(I ∧ F) = ¬I ∨ ¬F.
+> Conclusion: The person either did not have a valid ID or the fingerprint did not match (or both).
 
-**Answer:** No. $Q \rightarrow P$ (converse) is NOT logically equivalent to $P \rightarrow Q$. Seeing $Q$ true does not let us conclude $P$. This is the fallacy of **Affirming the Consequent**.
+That is it. Three lines. One mark. Done.
 
-To conclude $P$, you would need $Q \rightarrow P$ (the converse) as a separate rule, or equivalently $P \leftrightarrow Q$ (biconditional).
-
----
-
-## 🔬 Additional Practice Problems (Exam-Style)
-
-### Practice 1: Combined Modus Tollens with Additional Information
-
-**Given:** $(P \wedge A) \rightarrow C$; $\neg C$; $A$ is true.
-
-**Question:** What can you conclude about P?
-
-<details>
-<summary>Click to see answer</summary>
-
-Step 1: By Modus Tollens: $\neg C$ and $(P \wedge A) \rightarrow C$ gives $\neg(P \wedge A)$.
-
-Step 2: $\neg(P \wedge A) = \neg P \vee \neg A$ (De Morgan's).
-
-Step 3: Since $A$ is TRUE, $\neg A$ is FALSE.
-
-Step 4: Therefore $\neg P \vee \text{FALSE} = \neg P$ must be TRUE.
-
-**Conclusion:** $P$ is false. The student did NOT pass the exam.
-
-</details>
-
-### Practice 2: FOL Translation -- University Scenario
-
-**Translate:** "Every computer science student at Auckland takes at least one math course."
-
-**Domain setup:**
-- $\text{CS}(x)$: x is a CS student
-- $\text{Math}(y)$: y is a math course
-- $\text{Takes}(x, y)$: student x takes course y
-
-<details>
-<summary>Click to see answer</summary>
-
-$$\forall x\, [\text{CS}(x) \rightarrow \exists y\, (\text{Math}(y) \wedge \text{Takes}(x, y))]$$
-
-Read back: "For all x, if x is a CS student, then there exists a y such that y is a math course and x takes y."
-
-Note the nested quantifiers: $\forall$ outside, $\exists$ inside. The $\exists y$ is within the scope of $\forall x$.
-
-</details>
-
-### Practice 3: Identify the Fallacy
-
-**Given:** $\forall x\, (\text{Student}(x) \rightarrow \text{Enrolled}(x, \text{Uni}))$. David is enrolled at Uni. Conclusion: David is a student.
-
-<details>
-<summary>Click to see answer</summary>
-
-**This is INCORRECT.** This is Affirming the Consequent.
-
-The rule says: Student $\rightarrow$ Enrolled. Being enrolled does not mean being a student. David could be enrolled as staff, auditor, etc.
-
-To conclude David is a student, you would need the converse: $\text{Enrolled}(x, \text{Uni}) \rightarrow \text{Student}(x)$, which is a different (and not given) rule.
-
-</details>
-
-### Practice 4: FOL with Negated Quantifiers
-
-**Translate:** "No robot in the warehouse is idle."
-
-<details>
-<summary>Click to see answer</summary>
-
-**Option 1:** $\neg\exists x\, \text{Idle}(x)$ ("there does not exist an idle robot")
-
-**Option 2 (equivalent):** $\forall x\, \neg\text{Idle}(x)$ ("every robot is not idle")
-
-These are equivalent by quantifier negation: $\neg\exists x\, \varphi(x) \equiv \forall x\, \neg\varphi(x)$
-
-</details>
-
-### Practice 5: Truth Table for OR-based Implication
-
-**Given:** $(A \vee B) \rightarrow C$, $\neg C$. Deduce what must be true.
-
-<details>
-<summary>Click to see answer</summary>
-
-By Modus Tollens: $\neg(A \vee B)$.
-
-By De Morgan's: $\neg A \wedge \neg B$.
-
-**Both A and B must be false.** (This is the same pattern as the S1 2025 actual test.)
-
-Full truth table verification:
-
-| $A$ | $B$ | $A \vee B$ | $C$ | $(A \vee B) \rightarrow C$ |
-|---|---|---|---|---|
-| 0 | 0 | 0 | 0 | 1 ✓ |
-| 0 | 0 | 0 | 1 | 1 |
-| 0 | 1 | 1 | 0 | 0 ✗ |
-| 0 | 1 | 1 | 1 | 1 |
-| 1 | 0 | 1 | 0 | 0 ✗ |
-| 1 | 0 | 1 | 1 | 1 |
-| 1 | 1 | 1 | 0 | 0 ✗ |
-| 1 | 1 | 1 | 1 | 1 |
-
-With $C = 0$ and rule true: only row 1 works. Both $A = 0$ and $B = 0$.
-
-</details>
+**Lesson**: always calibrate your answer length to the mark value. More on this in the "How to Write the Perfect Answer" section below.
 
 ---
 
-## 🌍 Wumpus World -- The Lecture's Running Example
+### Past Paper 3: 2025 Real Test, Q1a (1 mark)
 
-The Wumpus World (lecture slides 17-20) is used to illustrate how propositional logic represents knowledge and enables inference. You should understand this example for conceptual questions.
+**The question:**
 
-**Setup:** A $4 \times 4$ grid with pits, a Wumpus, and gold. The agent navigates from (1,1).
+> In a smart office, the alarm system is governed by the following rule:
+> "If the door is open or the motion sensor is triggered, then the alarm will sound."
+> 
+> P: The door is open
+> Q: The motion sensor is triggered
+> R: The alarm sounds
+> 
+> Rule: (P ∨ Q) → R
+> Observation: The alarm did not sound (¬R).
+> 
+> Use propositional logic to deduce what must be true about P and Q. **[1 mark]**
 
-**Key rules in propositional logic (slide 19):**
-- "Square (1,3) has a pit": $P_{1,3}$
-- "Square (2,2) has no wumpus": $\neg W_{2,2}$
-- "Either (2,2) has a pit or (1,3) has a pit": $P_{2,2} \vee P_{1,3}$
-- "Since (2,2) has no stench, (1,2) has no wumpus": $\neg S_{2,2} \rightarrow \neg W_{1,2}$
-- "(2,4) is safe iff no pit or wumpus": $OK_{2,4} \leftrightarrow (\neg P_{2,4} \wedge \neg W_{2,4})$
+**Let's solve this together.**
 
-**Inference example (slide 20):**
-- $P1 = \neg S_{1,1} \wedge \neg B_{1,1}$ (no stench, no breeze at start)
-- From P1, infer $P2 = \neg S_{1,1}$ (no stench at start)
-- $P3$: if $(3,1)$ is a pit, at least one of $(2,1)$, $(3,2)$ has a breeze
-- $P4$: if none of $(2,1)$, $(3,2)$ has a breeze, then $(3,1)$ is not a pit
+This looks almost identical to the previous problems, but there is one crucial difference: the antecedent uses **OR (∨)** instead of **AND (∧)**. This changes the De Morgan's result!
 
-This demonstrates how propositional logic enables **forward chaining** (derive new facts from known facts) and **backward chaining** (verify a hypothesis by checking its premises).
+**Step 1 — Modus Tollens:**
 
-**Why propositional logic is weak for Wumpus World (slide 24):**
-- "A breeze is sensed iff an adjacent location contains a pit" requires one formula per square:
-  - $B_{1,1} \leftrightarrow (P_{1,2} \vee P_{2,1})$
-  - $B_{1,2} \leftrightarrow (P_{1,3} \vee P_{2,2} \vee P_{1,1})$
-  - ... one for EACH square
+We have (P ∨ Q) → R and ¬R.
+By Modus Tollens: ¬R implies ¬(P ∨ Q).
 
-In FOL, this becomes ONE formula: $\forall x\, (\text{Breeze}(x) \leftrightarrow \exists y\, (\text{Adjacent}(x,y) \wedge \text{Pit}(y)))$
+**Step 2 — De Morgan's Law:**
 
----
+¬(P ∨ Q) = ¬P **∧** ¬Q
 
-## 🌐 English Expression Tips
+Notice the flip! The OR became AND. This means BOTH must be false, not just one.
 
-### Exam Answer Sentence Templates
+**Step 3 — Conclusion in English:**
 
-**For Modus Tollens questions:**
-- "Given the rule [formula] and the observation [negated conclusion], by Modus Tollens we can deduce [negated premise]."
-- "Applying De Morgan's Law, $\neg(P \wedge Q) \equiv \neg P \vee \neg Q$, which means at least one of P, Q must be false."
-- "Applying De Morgan's Law, $\neg(P \vee Q) \equiv \neg P \wedge \neg Q$, which means both P and Q must be false."
+"The door was NOT open AND the motion sensor was NOT triggered."
 
-**For FOL translation questions:**
-- "Let the domain be [X]. Define predicate [name](x) to mean [meaning]."
-- "The statement translates to: [formula]."
-- "This is equivalent to [alternative form] by [law name]."
+**Full model answer:**
 
-**For FOL reasoning:**
-- "From the universal rule $\forall x\, (P(x) \rightarrow Q(x))$, we instantiate for [specific object]: $P(a) \rightarrow Q(a)$."
-- "Given $\neg Q(a)$, by Modus Tollens: $\neg P(a)$. Therefore, [conclusion in English]."
+> Given (P ∨ Q) → R and ¬R, apply Modus Tollens: ¬(P ∨ Q).
+> By De Morgan's Law: ¬(P ∨ Q) = ¬P ∧ ¬Q.
+> Therefore, the door was not open and the motion sensor was not triggered.
 
-### Commonly Confused Terms
+**Key difference from the previous questions**: When you negate an OR, you get AND. The conclusion here is stronger — we know for certain that BOTH P and Q are false. Compare this to the AND version, where we only know at least one is false.
 
-| Pair | Clarification |
-|------|---------------|
-| "implies" ($\rightarrow$) vs "equivalent" ($\leftrightarrow$) | $\rightarrow$ is one-way; $\leftrightarrow$ is two-way. "If P then Q" vs "P if and only if Q" |
-| "logically implies" ($\Rightarrow$) vs "material implication" ($\rightarrow$) | $\Rightarrow$ is a meta-statement (always true across all interpretations); $\rightarrow$ is a connective with a truth value |
-| $\forall$ vs $\exists$ | "for all" vs "there exists" -- check quantifier scope carefully |
-| "necessary" vs "sufficient" | In $P \rightarrow Q$: P is **sufficient** for Q; Q is **necessary** for P |
-| "converse" vs "contrapositive" | Converse of $P \rightarrow Q$ is $Q \rightarrow P$ (NOT equivalent); Contrapositive is $\neg Q \rightarrow \neg P$ (equivalent) |
-| "bound" vs "free" variable | Bound = within scope of $\forall$ or $\exists$; Free = not bound by any quantifier |
-| "formula" vs "sentence" | A sentence has no free variables; a formula may have free variables |
+Let's make sure you really feel this difference:
 
-### Commonly Misspelled Words
+| Original connective | After Modus Tollens | After De Morgan's | Meaning |
+|---|---|---|---|
+| (A **∧** B) → C, ¬C | ¬(A ∧ B) | ¬A **∨** ¬B | At least one is false |
+| (A **∨** B) → C, ¬C | ¬(A ∨ B) | ¬A **∧** ¬B | Both are false |
 
-- ~~proposisional~~ $\rightarrow$ propositional
-- ~~modus tolens~~ $\rightarrow$ modus tollens (double-l)
-- ~~De Morgans~~ $\rightarrow$ De Morgan's (with apostrophe)
-- ~~equivelance~~ $\rightarrow$ equivalence
-- ~~tautaology~~ $\rightarrow$ tautology
-- ~~existensial~~ $\rightarrow$ existential
-- ~~quantifer~~ $\rightarrow$ quantifier
+This table is gold for the exam. The teacher has tested both variants. Know them both.
 
 ---
 
-## ✅ Self-Test Checklist
+### Past Paper 4: FOL — "Not all birds can fly" (appeared in 2026 Sample Q1b AND 2025 Sample Q1b)
 
-### Propositional Logic Fundamentals
-- [ ] Can I write the truth table for ALL five connectives ($\neg, \wedge, \vee, \rightarrow, \leftrightarrow$) from memory?
-- [ ] Can I explain why $P \rightarrow Q$ is TRUE when $P$ is false (vacuous truth)?
-- [ ] Can I convert $P \rightarrow Q$ to $\neg P \vee Q$ and back?
-- [ ] Do I know both De Morgan's Laws and can I apply them correctly?
-- [ ] Can I distinguish between $\neg(A \wedge B) = \neg A \vee \neg B$ and $\neg(A \vee B) = \neg A \wedge \neg B$?
+**The question (from both papers):**
 
-### Inference Rules
-- [ ] Can I identify Modus Tollens in a word problem and apply it step by step?
-- [ ] Can I explain why Affirming the Consequent ($P \rightarrow Q$, $Q$ $\therefore$ $P$) is INVALID?
-- [ ] Can I state the difference between Modus Ponens and Modus Tollens?
-- [ ] Can I perform the full truth-table-based deduction required by the 2026 sample?
+> A biologist claims: "Not all birds in this region can fly."
+> Let the domain be all birds in this region, and Fly(x) means bird x can fly.
+> 
+> (i) Write this claim in formal first-order logic. **[1 mark]**
+> (ii) Provide a realistic example (in one sentence) that would make the statement true. **[1 mark]**
 
-### First-Order Logic
-- [ ] Can I translate "Not all X have property P" correctly as $\neg\forall x\, P(x)$ (NOT $\forall x\, \neg P(x)$)?
-- [ ] Do I know the quantifier negation laws: $\neg\forall x = \exists x\, \neg$ and $\neg\exists x = \forall x\, \neg$?
-- [ ] Can I apply Universal Instantiation followed by Modus Tollens (S1 2025 actual test pattern)?
-- [ ] Do I know the rule of thumb: $\forall$ pairs with $\rightarrow$, $\exists$ pairs with $\wedge$?
-- [ ] Can I distinguish free vs. bound variables and identify whether a formula is a sentence?
+**Let's think through this carefully.**
 
-### Exam Readiness
-- [ ] Can I solve the AND-premise version: $(I \wedge F) \rightarrow E$, $\neg E$ $\therefore$ $\neg I \vee \neg F$?
-- [ ] Can I solve the OR-premise version: $(P \vee Q) \rightarrow R$, $\neg R$ $\therefore$ $\neg P \wedge \neg Q$?
-- [ ] Can I do both the algebraic AND the truth table method for the same problem?
-- [ ] Can I provide a realistic example for $\neg\forall x\, \text{Fly}(x)$ (e.g., penguins, kiwis)?
-- [ ] Can I explain why "D is enrolled $\therefore$ D is a student" is a converse error?
-- [ ] Have I practiced writing each answer within 3 minutes (time pressure)?
+"Not all birds can fly." What does this actually mean?
+
+It does NOT mean "no birds can fly." It means "there is at least one bird that cannot fly." Most birds might still fly just fine — we only need one counterexample.
+
+In FOL, "all birds can fly" would be: ∀x Fly(x)
+(Since the domain is already "all birds in this region," we do not need a Bird(x) predicate.)
+
+"NOT all birds can fly" is the negation: **¬∀x Fly(x)**
+
+And by the quantifier negation rule: ¬∀x Fly(x) ≡ ∃x ¬Fly(x)
+
+This reads: "There exists a bird x such that x cannot fly."
+
+**Model answer for part (i):**
+
+> ¬∀x Fly(x)
+
+That is it. One formula, one mark. You could also write ∃x ¬Fly(x) — both are correct.
+
+**Model answer for part (ii):**
+
+> "There is a penguin in this region, and penguins cannot fly."
+
+**The trap to avoid**: Do NOT write ∀x ¬Fly(x). That means "ALL birds cannot fly" — which is much stronger than what the biologist claimed. This is the single most common mistake on this question. Let me explain why in detail.
 
 ---
 
-## 📋 Quick Reference Card (For Your Handwritten Cheat Sheet)
+### Past Paper 5: FOL — Universal Instantiation + Modus Tollens (2025 Real Test Q1b, 1 mark)
+
+**The question:**
+
+> At a university, the disciplinary policy states:
+> "Every student who cheats in the exam will be disqualified from the course."
+> 
+> Cheat(x): student x cheats
+> Disqualified(x): student x is disqualified
+> 
+> Rule: ∀x (Cheat(x) → Disqualified(x))
+> Observation: Student Alice is not disqualified.
+> 
+> Based on the rule and the observed fact, use first-order logic to determine whether Alice cheated. **[1 mark]**
+
+**Let's solve this step by step.**
+
+This problem combines two techniques: Universal Instantiation and Modus Tollens. Let's take it one step at a time.
+
+**Step 1 — Universal Instantiation:**
+
+The rule says ∀x (Cheat(x) → Disqualified(x)). This means the rule applies to *every* x. In particular, it applies to Alice. So we can substitute x = Alice:
+
+Cheat(Alice) → Disqualified(Alice)
+
+We have just gone from "for all x" to one specific person. This step is called **universal instantiation**.
+
+**Step 2 — Modus Tollens:**
+
+Now we have a simple propositional setup:
+- Rule: Cheat(Alice) → Disqualified(Alice)
+- Fact: ¬Disqualified(Alice)
+
+By Modus Tollens: ¬Cheat(Alice)
+
+**Step 3 — Conclusion:**
+
+Alice did not cheat.
+
+**Full model answer:**
+
+> From ∀x (Cheat(x) → Disqualified(x)), instantiate for Alice:
+> Cheat(Alice) → Disqualified(Alice).
+> Given ¬Disqualified(Alice), apply Modus Tollens:
+> ¬Cheat(Alice).
+> Conclusion: Alice did not cheat.
+
+Notice the flow: Universal Rule → Instantiate for specific individual → Modus Tollens → Conclusion. This is a template. If the teacher gives you a ∀x rule and a negated fact about a specific person, this is always the approach.
+
+---
+
+## Part 6 — The Tricky Parts That Trip Students Up
+
+### Trap 1: ¬∀x P(x) vs ∀x ¬P(x)
+
+This is the most common FOL mistake. Let me kill it with concrete examples.
+
+**¬∀x P(x)** means "Not all x satisfy P." In other words, there is at least one x that does NOT satisfy P. But many x might still satisfy P.
+
+**∀x ¬P(x)** means "No x satisfies P." Every single x fails to satisfy P.
+
+Example with students and passing:
+- ¬∀x Passed(x) = "Not all students passed" = "At least one student failed" (but most might have passed)
+- ∀x ¬Passed(x) = "No student passed" = "Every single student failed"
+
+These are wildly different statements. If you write ∀x ¬Passed(x) when you mean ¬∀x Passed(x), you are saying something much too strong.
+
+**The correct equivalence is**: ¬∀x P(x) ≡ **∃x** ¬P(x) — "not all" = "there exists one that doesn't."
+
+### Trap 2: Forgetting the English Conclusion
+
+Look at the model answers from the marking rubrics. Every single one ends with a sentence in English. "The person either did not have a valid ID or the fingerprint did not match." "Alice did not cheat." "The door was not open and the motion sensor was not triggered."
+
+The marks often say things like "1 mark for the natural language conclusion." If you stop at the symbolic derivation, you are literally leaving a mark on the table. Always finish with a plain English sentence.
+
+### Trap 3: Not Adjusting for Mark Value
+
+The same question — (I ∧ F) → E with ¬E — appeared as both a 3-mark and a 1-mark question across different papers. The 3-mark version wants truth tables. The 1-mark version wants a concise three-line derivation. Writing truth tables for a 1-mark question wastes time. Writing three lines for a 3-mark question loses marks.
+
+---
+
+## Part 7 — First-Order Logic: The Complete Guide
+
+### The Three Ingredients of FOL
+
+Propositional logic can only talk about specific facts: "It is raining." "The alarm is on."
+
+First-Order Logic (FOL) adds the ability to talk about *categories*:
+
+1. **Variables**: x, y — placeholders for objects in some domain
+2. **Predicates**: Bird(x), Fly(x), Cheat(x) — properties that objects can have
+3. **Quantifiers**: 
+   - ∀x ("for all x") — every object in the domain satisfies this
+   - ∃x ("there exists an x") — at least one object in the domain satisfies this
+
+### The Quantifier Negation Rules
+
+These are essential and come up constantly:
 
 ```
-MODUS TOLLENS:  P->Q, ~Q  ==>  ~P
-
-DE MORGAN'S:    ~(A^B) = ~Av~B    (AND becomes OR)
-                ~(AvB) = ~A^~B    (OR becomes AND)
-
-IMPLICATION:    P->Q  =  ~PvQ
-
-QUANTIFIERS:    ~forall x P(x)  =  exists x ~P(x)
-                ~exists x P(x)  =  forall x ~P(x)
-
-FOL RULE:       forall uses ->    (forall x: P(x) -> Q(x))
-                exists uses ^     (exists x: P(x) ^ Q(x))
-
-CONVERSE ERROR: P->Q, Q  =/=>  P    (INVALID!)
-CONTRAPOSITIVE: P->Q  =  ~Q->~P     (VALID equivalent)
-
-EXAM PATTERN:
-  1. Identify P->Q structure
-  2. Apply Modus Tollens: ~Q ==> ~P
-  3. Apply De Morgan's to simplify ~P
-  4. State conclusion in English
+¬∀x P(x)  ≡  ∃x ¬P(x)      "not all do" = "some don't"
+¬∃x P(x)  ≡  ∀x ¬P(x)      "none do"    = "all don't"
 ```
+
+Think of these as De Morgan's Laws for quantifiers. The negation goes inside, and ∀ flips to ∃ (and vice versa). Same pattern as AND flipping to OR.
+
+### Common FOL Translation Patterns
+
+Here are the patterns the teacher is most likely to test, based on past papers:
+
+| English | FOL |
+|---------|-----|
+| "All birds can fly" | ∀x (Bird(x) → Fly(x)) |
+| "Not all birds can fly" | ¬∀x Fly(x) or ∃x ¬Fly(x) |
+| "No bird can fly" | ∀x ¬Fly(x) or ¬∃x Fly(x) |
+| "Some birds can fly" | ∃x (Bird(x) ∧ Fly(x)) |
+| "Every student who cheats is disqualified" | ∀x (Cheat(x) → Disqualified(x)) |
+| "There is a student who cheats but is not disqualified" | ∃x (Cheat(x) ∧ ¬Disqualified(x)) |
+
+**Important subtlety**: Notice that "all X that are Y are Z" uses →, while "some X are Y and Z" uses ∧. This is a common source of errors:
+
+- ∀x (Bird(x) **→** Fly(x)) — CORRECT for "all birds fly"
+- ∀x (Bird(x) **∧** Fly(x)) — WRONG! This says "everything is a bird and can fly" (chairs, rocks, everything)
+
+With ∀, use →. With ∃, use ∧. This is a reliable rule of thumb.
+
+### Universal Instantiation
+
+If you know a statement holds for ALL x, it holds for any specific individual:
+
+```
+∀x P(x)
+──────────────── Universal Instantiation (x = c)
+P(c)
+```
+
+This is what lets you go from "every cheater gets disqualified" to "if Alice cheats, Alice gets disqualified."
+
+---
+
+## Part 8 — How to Write the Perfect Answer
+
+Based on the actual marking rubrics from all four papers, here is exactly what to write for each mark value.
+
+### For a 1-mark propositional logic question:
+
+Write exactly this pattern (3 lines, ~30 seconds):
+
+> Given [rule] and [observation], apply Modus Tollens: ¬[consequent] → ¬[antecedent].
+> By De Morgan's Law: ¬[antecedent] = [simplified form].
+> Conclusion: [English sentence].
+
+Example:
+> Given (P ∨ Q) → R and ¬R, apply Modus Tollens: ¬(P ∨ Q).
+> By De Morgan's: ¬(P ∨ Q) = ¬P ∧ ¬Q.
+> Conclusion: The door was not open and the motion sensor was not triggered.
+
+### For a 3-mark propositional logic question:
+
+Write this pattern (~2 minutes):
+
+> 1. State the rule and observation.
+> 2. Show the truth table for X → E (the implication).
+> 3. Explain: since E = 0 and the rule is true, X must be 0.
+> 4. Show the truth table for the antecedent (e.g., I ∧ F).
+> 5. Identify which rows have the antecedent = 0.
+> 6. State De Morgan's Law.
+> 7. Write the English conclusion.
+
+### For a 1-mark FOL translation:
+
+Just write the formula. One line.
+
+> ¬∀x Fly(x)
+
+### For a 1-mark FOL reasoning question:
+
+Write the instantiation, Modus Tollens, and conclusion (4 lines):
+
+> From ∀x (Cheat(x) → Disqualified(x)), instantiate for Alice:
+> Cheat(Alice) → Disqualified(Alice).
+> Given ¬Disqualified(Alice), by Modus Tollens: ¬Cheat(Alice).
+> Conclusion: Alice did not cheat.
+
+### For a 2-mark FOL question (translation + example):
+
+> (i) ¬∀x Fly(x)
+> (ii) "There is a penguin in this region, and penguins cannot fly."
+
+---
+
+## Part 9 — Practice Problems with Full Solutions
+
+Here are practice problems covering every angle the teacher might test. Try each one BEFORE reading the solution. Seriously — cover the solution and work it out on paper first.
+
+### Practice 1: Modus Tollens with AND antecedent
+
+> A hospital has the following rule: "If the patient has both a fever (F) and a cough (C), then the patient is isolated (I)."
+> Rule: (F ∧ C) → I
+> Observation: Patient Bob is not isolated (¬I).
+> What can you deduce about F and C?
+
+**Solution:**
+
+> By Modus Tollens: ¬I → ¬(F ∧ C).
+> By De Morgan's: ¬(F ∧ C) = ¬F ∨ ¬C.
+> Conclusion: Patient Bob either does not have a fever, or does not have a cough (or both).
+
+### Practice 2: Modus Tollens with OR antecedent
+
+> A fire alarm system works as follows: "If smoke is detected (S) or heat exceeds the threshold (H), the alarm activates (A)."
+> Rule: (S ∨ H) → A
+> Observation: The alarm did not activate (¬A).
+> What can you deduce?
+
+**Solution:**
+
+> By Modus Tollens: ¬A → ¬(S ∨ H).
+> By De Morgan's: ¬(S ∨ H) = ¬S ∧ ¬H.
+> Conclusion: Smoke was NOT detected AND heat did NOT exceed the threshold. Both conditions were absent.
+
+Note how the OR in the original gives a stronger conclusion (AND) compared to Practice 1 where AND in the original gave a weaker conclusion (OR).
+
+### Practice 3: FOL translation — "Not all X are Y"
+
+> Translate into FOL: "Not every employee in the company speaks English."
+> Let the domain be all employees in the company. Let Speaks(x) mean "x speaks English."
+
+**Solution:**
+
+> ¬∀x Speaks(x)
+>
+> Equivalently: ∃x ¬Speaks(x) — "There exists an employee who does not speak English."
+>
+> Example: "Maria is an employee who only speaks Spanish."
+
+### Practice 4: FOL translation — "Every X that is Y is also Z"
+
+> Translate into FOL: "Every student who submits late receives a penalty."
+> Domain: all students. Late(x): x submits late. Penalty(x): x receives a penalty.
+
+**Solution:**
+
+> ∀x (Late(x) → Penalty(x))
+
+Not ∀x (Late(x) ∧ Penalty(x)) — that would mean every student in the domain submits late AND receives a penalty, which is not what the English says.
+
+### Practice 5: Universal Instantiation + Modus Tollens
+
+> Rule: "Every car that exceeds the speed limit will receive a fine."
+> ∀x (Speeding(x) → Fined(x))
+> Observation: Car #42 did not receive a fine (¬Fined(Car42)).
+> Did Car #42 exceed the speed limit?
+
+**Solution:**
+
+> By universal instantiation with x = Car42:
+> Speeding(Car42) → Fined(Car42).
+> Given ¬Fined(Car42), by Modus Tollens:
+> ¬Speeding(Car42).
+> Conclusion: Car #42 did not exceed the speed limit.
+
+### Practice 6: Truth Table Construction (for 3-mark questions)
+
+> Rule: (A ∨ B) → C
+> Observation: ¬C
+> Show, using truth tables, what must be true about A and B.
+
+**Solution:**
+
+Let X = (A ∨ B). Truth table for X → C:
+
+| X (A ∨ B) | C | X → C |
+|---|---|---|
+| 0 | 0 | 1 |
+| 0 | 1 | 1 |
+| 1 | 0 | 0 |
+| 1 | 1 | 1 |
+
+Since C = 0 and X → C is true (our rule), only row 1 is valid. So X = A ∨ B = 0.
+
+Truth table for A ∨ B:
+
+| A | B | A ∨ B |
+|---|---|-------|
+| 0 | 0 | 0 |
+| 0 | 1 | 1 |
+| 1 | 0 | 1 |
+| 1 | 1 | 1 |
+
+A ∨ B = 0 only in row 1. So A = 0 and B = 0.
+
+This is De Morgan's: ¬(A ∨ B) = ¬A ∧ ¬B.
+
+Conclusion: Both A and B are false.
+
+### Practice 7: Mixed — FOL negation chain
+
+> Rule: ∀x (Registered(x) → CanVote(x))
+> Translate the negation of the rule into FOL. What does it mean?
+
+**Solution:**
+
+> ¬∀x (Registered(x) → CanVote(x))
+> ≡ ∃x ¬(Registered(x) → CanVote(x))
+
+Now, recall that P → Q ≡ ¬P ∨ Q. So ¬(P → Q) ≡ ¬(¬P ∨ Q) ≡ P ∧ ¬Q.
+
+> ≡ ∃x (Registered(x) ∧ ¬CanVote(x))
+
+Meaning: "There exists a registered person who cannot vote." The rule has a loophole.
+
+---
+
+## Part 10 — Quick Reference Card
+
+Keep this in your head (or on your double-sided handwritten note sheet):
+
+```
+MODUS PONENS:    P → Q,  P       ⟹  Q
+MODUS TOLLENS:   P → Q,  ¬Q      ⟹  ¬P        ← ALWAYS tested
+
+DE MORGAN 1:     ¬(A ∧ B)  =  ¬A ∨ ¬B          ← negate AND, get OR
+DE MORGAN 2:     ¬(A ∨ B)  =  ¬A ∧ ¬B          ← negate OR, get AND
+
+QUANTIFIER NEGATION:
+  ¬∀x P(x)  ≡  ∃x ¬P(x)     "not all" = "some don't"
+  ¬∃x P(x)  ≡  ∀x ¬P(x)     "none"    = "all don't"
+
+UNIVERSAL INSTANTIATION:
+  ∀x P(x)  ⟹  P(c)           for any specific c
+
+IMPLICATION EQUIVALENCE:
+  P → Q  ≡  ¬P ∨ Q
+
+COMMON FALLACIES (INVALID — never use these):
+  P → Q,  Q   ⟹  P     ← WRONG (affirming the consequent)
+  P → Q,  ¬P  ⟹  ¬Q    ← WRONG (denying the antecedent)
+```
+
+---
+
+## Part 11 — English Expression Guide
+
+### Phrases for Modus Tollens derivations
+
+- "We are given the rule (P ∧ Q) → R and observe ¬R."
+- "By Modus Tollens, since the consequent R is false, the antecedent (P ∧ Q) must also be false."
+- "Applying De Morgan's Law, ¬(P ∧ Q) is equivalent to ¬P ∨ ¬Q."
+- "We conclude that at least one of P or Q is false (or both)."
+
+### Phrases for FOL questions
+
+- "Let the domain be the set of all [people / birds / students]."
+- "Define the predicate P(x) to mean 'x has property P.'"
+- "By universal instantiation with x = Alice, the rule becomes..."
+- "There exists an x such that x is a [bird] and x cannot [fly]."
+
+### Words to avoid
+
+| Do not write | Write instead |
+|---|---|
+| "A implies B, so B implies A" | "A implies B does not tell us anything about the converse" |
+| "disprove" (when meaning ¬Q) | "Q is false" or "the negation of Q holds" |
+| "cannot determine" (for F→T in truth table) | The value is T (true, by vacuous truth) |
+
+---
+
+## Self-Check Checklist
+
+Before you walk into the exam, make sure you can answer YES to every single one:
+
+- [ ] Can I write truth tables for ∧, ∨, →, and ↔ from memory?
+- [ ] Can I explain why P → Q is true when P is false (vacuous truth)?
+- [ ] Can I apply Modus Tollens on (A ∧ B) → C with ¬C, and get ¬A ∨ ¬B?
+- [ ] Can I apply Modus Tollens on (A ∨ B) → C with ¬C, and get ¬A ∧ ¬B?
+- [ ] Do I know the difference between the two De Morgan's results above?
+- [ ] Can I translate "not all X satisfy P" into FOL (¬∀x P(x) ≡ ∃x ¬P(x))?
+- [ ] Can I do Universal Instantiation then Modus Tollens for a named individual?
+- [ ] Do I always finish with a natural language conclusion?
+- [ ] Do I know to write truth tables for 3-mark questions but not for 1-mark questions?
+- [ ] Can I spot and reject affirming the consequent and denying the antecedent?
+- [ ] Do I know that ¬∀x P(x) is NOT the same as ∀x ¬P(x)?

@@ -1,723 +1,921 @@
-# Logic Neural Networks (LNN) & Differentiable Logic
+# Logic Neural Networks (LNN)
 
-## 🎯 Exam Importance
+## Exam Priority
 
-🔴 **必考 — LNN appears as Question 2 in EVERY test paper**
+**Must-know** | Appeared in **every single past test** (4/4) | Typically worth 2--4 marks
 
-| Test Paper | Question | Marks | Topic |
-|-----------|----------|-------|-------|
-| Sample Test S1 2025 | Q2 (2 marks) | (a) 1 mark + (b) 1 mark | HeatingOn rule: natural language + compute soft AND |
-| Actual Mid-Test S1 2025 | Q2 (3 marks) | (a) 1 mark + (b) 2 marks | Autonomous vehicle: LNN bounds with OR, safety-critical reasoning |
-| Sample Test S1 2026 | Q2 (4 marks) | (a) 2 marks + (b) 2 marks | HeatingOn rule: natural language + compute soft AND |
-
-**Pattern**: LNN is always Q2, worth 2-4 marks (13-20% of the test). Two sub-patterns repeat:
-1. **Interpret an LNN rule in natural language and contrast with Boolean logic** (every test)
-2. **Either compute a soft-logic value OR reason about truth bounds** (every test)
+LNN is one of the most reliably examined topics in COMPSCI 713. The lecturer has asked about it in the 2025 Sample, 2025 Real, 2026 Sample tests, and the format is predictable. If you learn this chapter well, these are among the easiest marks on the paper.
 
 ---
 
-## 📖 Core Concepts
+## Part 1: Why Does LNN Even Exist?
 
-| English Term | 中文 | One-Sentence Definition |
-|-------------|------|------------------------|
-| Logic Neural Network / LNN | 逻辑神经网络 | A neural-symbolic system where the network structure mirrors a logical syntax tree, operating on continuous truth values [0,1] |
-| Differentiable Logic / Soft Logic | 可微分逻辑 | Converting discrete Boolean operators into smooth continuous functions so gradient descent can be applied |
-| Product-Sum T-norm | 积-和三角范数 | A specific soft logic: AND = $A \times B$, OR = $A + B - A \times B$, NOT = $1 - A$ |
-| Lukasiewicz Logic | 卢卡西维茨逻辑 | A many-valued logic: AND = $\max(0, a+b-1)$, OR = $\min(1, a+b)$ |
-| Truth Bounds [L, U] | 真值界 | Each proposition maintains a lower bound L and upper bound U, where $0 \le L \le U \le 1$ |
-| Threshold $\alpha$ | 分类阈值 | The cutoff value used to classify truth bounds into TRUE / FALSE / UNCERTAIN |
-| Upward Pass | 上行传播 | Information flows from leaf inputs up to the conclusion (like forward chaining) |
-| Downward Pass | 下行传播 | Information flows from conclusion back to premises (like backward chaining) |
-| Bidirectional Inference | 双向推理 | LNN runs both upward and downward passes until bounds converge |
-| Three-Valued Logic | 三值逻辑 | Logic with three truth values: True (T), Unknown (U), False (F) |
-| Neural-Symbolic AI | 神经符号AI | An approach that combines neural network learning with symbolic logical reasoning |
+Before we touch any formulas, let us understand the *problem* that LNN was invented to solve. This is the kind of thinking the lecturer rewards -- showing you understand the motivation, not just the mechanics.
 
----
+### The Two Worlds That Could Not Talk to Each Other
 
-## 🧠 Feynman Draft -- From Zero to LNN
+Imagine two colleagues at a company. One is a brilliant detective (that is classical logic). The other is a talented artist who works by intuition (that is a neural network). They are both useful, but they cannot collaborate.
 
-### Part 1: Why Do We Need Logic in Neural Networks?
+**The Detective (Classical Logic)** is rigorous and transparent. Given a set of rules, the detective can tell you *exactly* why a conclusion follows. "The suspect was at the scene AND had the weapon, THEREFORE the suspect is guilty." Every step is auditable. A judge can inspect the reasoning and trust it.
 
-Imagine a doctor looking at an X-ray. A neural network might say "85% chance of cancer" -- but the doctor asks *why*. The neural network shrugs. It is a **black box（黑盒）**: powerful at pattern recognition but terrible at explaining itself.
+But the detective has a fatal flaw: everything must be perfectly black-and-white. The suspect was *either* at the scene or not. The weapon was *either* found or not. There is no room for "the witness is 90% sure she saw the suspect" or "the weapon was partially matching." If the evidence is ambiguous, the detective is paralysed.
 
-Now imagine a rule-based system: "IF the patient has a tumor larger than 2cm AND the margins are irregular THEN suspect malignancy." This is **transparent** -- you can see exactly why the decision was made. But writing thousands of such rules by hand is impractical, and rules cannot handle "maybe" situations.
+**The Artist (Neural Network)** thrives on ambiguity. Feed a neural network a blurry photo, and it will tell you "I am 87% confident this is a cat." It learns patterns from data, handles noise gracefully, and can process messy real-world inputs. But ask the artist *why* it thinks it is a cat, and you get a shrug. The reasoning is locked inside millions of learned weights -- a black box.
 
-**LNN is the marriage of both**: it keeps the logical structure (so you can read the rules) but makes the operators smooth and continuous (so gradient descent can learn the parameters from data).
+**LNN is what happens when the detective and the artist learn to work together.** It keeps the detective's logical structure (rules you can read and inspect) but gives those rules the artist's ability to work with partial, uncertain information and to learn from data.
 
-### Part 2: From Light Switches to Dimmer Switches
+### Why This Matters for Exam Answers
 
-Classical Boolean logic is like a light switch -- strictly ON (1) or OFF (0). But the real world is not binary. Is 12 degrees Celsius "cold"? It is *somewhat* cold -- maybe 0.6 out of 1.0.
+The lecturer's exam questions consistently test whether you understand this gap. When a question asks "how is LNN different from standard Boolean logic?" -- the answer is rooted in this section. When a question asks about benefits of bounds in safety-critical applications -- the answer connects to why the detective alone is not enough.
 
-**Soft logic replaces the light switch with a dimmer switch.** Instead of {0, 1}, truth values live in the continuous interval [0, 1]. Every logical operator (AND, OR, NOT) becomes a smooth function.
-
-**Why does smoothness matter?** Because neural networks learn by computing gradients. Boolean AND has zero gradient almost everywhere (it is a step function), so backpropagation cannot adjust weights. But if AND = $A \times B$, the gradient $\frac{\partial}{\partial A} = B$ exists everywhere. Now we can learn!
-
-### Part 3: The Dimmer Switch Operators (Product-Sum)
-
-This is the specific soft logic system used in the exam. Memorize it.
-
-| Operator | Boolean Version | Soft Logic (Product-Sum) |
-|---------|----------------|------------------------|
-| AND ($\wedge$) | Both must be 1 | $A \times B$ |
-| OR ($\vee$) | At least one is 1 | $A + B - A \times B$ |
-| NOT ($\neg$) | Flip 0/1 | $1 - A$ |
-
-**Why does OR = $A + B - AB$?** Think of probability. If you roll two dice, the chance of at least one six is $P(A) + P(B) - P(A \text{ and } B)$. The subtraction avoids double-counting the overlap. This is exactly the inclusion-exclusion principle.
-
-### Part 4: What Makes LNN Different from Plain Fuzzy Logic?
-
-> ⚠️ **Common Misconception**: Students think LNN is just "fuzzy logic with a neural network." This is WRONG. LNN has three features that fuzzy logic lacks:
-> 1. **Learnable weights** -- the operator parameters are tuned by gradient descent
-> 2. **Bidirectional inference** -- information flows both up (inputs to conclusion) AND down (conclusion to inputs), not just one direction
-> 3. **Logical soundness guarantees** -- LNN is mathematically proven to maintain consistency
-
-### Part 5: Truth Bounds -- The Safety Net
-
-Instead of a single number, LNN gives you a **range** [L, U] for each proposition. Think of it as a confidence interval:
-
-- **Cold = [0.8, 1.0]** means "we are fairly sure it is cold -- at least 0.8, possibly up to 1.0"
-- **AtHome = [0.3, 0.5]** means "quite uncertain whether someone is home"
-
-Given a threshold $\alpha$:
-- If **both L and U are above $\alpha$** ($L \ge \alpha$) -- **Definitely TRUE**
-- If **both L and U are below $\alpha$** ($U \le \alpha$) -- **Definitely FALSE**
-- If **L < $\alpha$ < U** (bounds straddle the threshold) -- **UNCERTAIN**
-- If **L > U** -- **CONTRADICTION** (should not happen in a well-formed LNN)
-
-> 💡 **Core Intuition**: LNN replaces Boolean {0,1} switches with smooth [0,1] dimmers, adds confidence bounds [L,U], and uses bidirectional message passing -- giving you learnable, explainable, uncertainty-aware reasoning.
+> **Common Misconception:** Students often describe LNN as "just fuzzy logic." While LNN shares the idea of continuous truth values with fuzzy logic, LNN is specifically designed to be *differentiable* so it can be trained with gradient descent like a neural network. Fuzzy logic systems typically have fixed rules set by human experts. LNN *learns* its rules and parameters from data.
 
 ---
 
-## 📐 Formal Definitions
+## Part 2: From Boolean AND to Soft AND -- The Heart of LNN
 
-### Soft Logic Operators (Product-Sum) -- THE EXAM DEFAULT
+This is the single most tested concept. Let us build it from the ground up.
 
-These are the operators used in all exam questions unless stated otherwise:
+### Step 1: Remember What Boolean AND Does
 
-$$\text{AND}(A, B) = A \times B$$
+You already know Boolean AND from programming. Here is the truth table:
 
-$$\text{OR}(A, B) = A + B - A \times B$$
+| A | B | A AND B |
+|---|---|---------|
+| 0 | 0 | 0 |
+| 0 | 1 | 0 |
+| 1 | 0 | 0 |
+| 1 | 1 | 1 |
 
-$$\text{NOT}(A) = 1 - A$$
+Both inputs must be exactly 1 for the output to be 1. Simple. Clean. But real sensors do not give you clean 0s and 1s.
 
-### Three T-Norms You Must Know
+### Step 2: The Problem With Real-World Inputs
 
-| T-norm | AND formula | OR formula | NOT formula |
-|--------|-----------|-----------|------------|
-| **Product** (exam default) | $A \times B$ | $A + B - AB$ | $1 - A$ |
-| **Lukasiewicz** | $\max(0, A + B - 1)$ | $\min(1, A + B)$ | $1 - A$ |
-| **Godel (min/max)** | $\min(A, B)$ | $\max(A, B)$ | $1 - A$ |
+Now imagine a smart home system. You have a temperature sensor and an occupancy sensor. The temperature sensor says: "Cold = 0.9" (it is pretty cold -- not absolutely freezing, but quite cold). The occupancy sensor says: "AtHome = 0.4" (maybe someone is home? The motion detector triggered briefly, but it is not certain).
 
-### Lukasiewicz-like Logic in LNN (from Slide 40)
+Your rule is: **"If it is cold AND someone is at home, turn on the heating."**
 
-The lecture defines a **basis activation function（基础激活函数）**:
+With Boolean logic, you have to pick a threshold and round:
+- Is 0.9 "True"? Probably yes (above 0.5).
+- Is 0.4 "True"? Hmm... below 0.5, so "False"?
 
-$$f(x) = \max(0, \min(1, x))$$
+So Boolean AND says: 1 AND 0 = 0. No heating. But that feels wrong -- it *is* cold, and there *might* be someone home. Maybe the heating should come on at a low level, not full blast but not completely off either.
 
-This clamps the output to [0, 1]. Then:
+This is the fundamental problem: **Boolean logic throws away the nuance in your sensor readings.**
 
-**Logical AND** for inputs $x_1, x_2, ..., x_n$:
+### Step 3: Enter the Soft AND Operator
 
-$$\bigwedge_{i \in I} x_i = f\left(1 - \sum_i (1 - x_i)\right)$$
+LNN replaces the strict Boolean AND with a **soft AND**, written as \\(\otimes\\) (the tensor product symbol). Instead of requiring both inputs to be exactly 1, the soft AND takes continuous values in [0, 1] and produces a continuous output in [0, 1].
 
-**Logical OR** for inputs $x_1, x_2, ..., x_n$:
+The rule becomes:
 
-$$\bigvee_{i \in I} x_i = f\left(\sum_i x_i\right)$$
+\\[
+\text{HeatingOn} \leftarrow \text{Cold} \otimes \text{AtHome}
+\\]
 
-### Truth Bounds Classification (from Slide 34)
+But how exactly do you combine 0.9 and 0.4 into a single number? That is where **t-norms** come in.
 
-Given bounds [L, U] and threshold $\alpha$:
+### Step 4: Three Ways to Compute Soft AND (T-Norms)
 
-| Lower Bound (L) | Upper Bound (U) | Classification |
-|-----------------|-----------------|---------------|
-| $L = 0$ | $U = 1$ | **Unknown** (no information) |
-| $L \le \alpha$ | $U \le \alpha$ | **False** (both bounds below threshold) |
-| $L \ge \alpha$ | $U \ge \alpha$ | **True** (both bounds above threshold) |
-| $L > U$ | -- | **Contradiction** (inconsistent) |
-| $L < \alpha$ | $U > \alpha$ | **Uncertain** (bounds straddle threshold) |
+A t-norm is simply a mathematical function that generalises Boolean AND to continuous values. There are three you need to know for the exam. Let us compute all three with Cold = 0.9 and AtHome = 0.4:
+
+#### Product T-Norm: Multiply Them
+
+\\[
+A \otimes B = A \times B
+\\]
+
+\\[
+0.9 \times 0.4 = 0.36
+\\]
+
+**Intuition:** Think of this as "the probability that both happen if they are independent." If you are 90% sure it is cold and 40% sure someone is home, and these are independent, then you are 36% sure both are true simultaneously. The product t-norm is the most commonly used in LNN exam questions.
+
+#### Lukasiewicz T-Norm: Add Then Subtract
+
+\\[
+A \otimes B = \max(0,\; A + B - 1)
+\\]
+
+\\[
+\max(0,\; 0.9 + 0.4 - 1) = \max(0,\; 0.3) = 0.3
+\\]
+
+**Intuition:** This is the most "pessimistic" of the three (well, almost). It says: "How much *overlap* is there in the truth of A and B?" If A = 0.9 covers 90% of the truth space and B = 0.4 covers 40%, their overlap is at most 30%. If the values are low enough that they do not overlap at all, you get 0.
+
+#### Godel (Min) T-Norm: Take the Weakest Link
+
+\\[
+A \otimes B = \min(A, B)
+\\]
+
+\\[
+\min(0.9, 0.4) = 0.4
+\\]
+
+**Intuition:** A chain is only as strong as its weakest link. The AND is only as true as the least-true input. This is the most "generous" t-norm -- it gives the highest result.
+
+### Comparison Table: All Three at a Glance
+
+| T-Norm | Formula | Cold=0.9, AtHome=0.4 | Character |
+|--------|---------|---------------------|-----------|
+| Product | \\(A \times B\\) | **0.36** | Moderate -- penalises both low inputs |
+| Lukasiewicz | \\(\max(0, A+B-1)\\) | **0.30** | Pessimistic -- requires significant overlap |
+| Godel (min) | \\(\min(A, B)\\) | **0.40** | Generous -- only as bad as the weakest |
+
+All three agree on Boolean inputs (when A, B are exactly 0 or 1, they produce the same result as classical AND). They diverge when inputs are partial -- and that divergence is precisely what the lecturer likes to test.
+
+> **Exam Tip:** The 2025 and 2026 sample tests both use the **product t-norm** for computation questions. Unless the question specifies otherwise, use product. But always *state which t-norm you are using* in your answer.
+
+### Step 5: Does the Heating Turn On?
+
+We computed HeatingOn = 0.36 (product t-norm). But 0.36 is just a number -- we need a decision. This is where the **threshold** comes in.
+
+- If the activation threshold is 0.5: HeatingOn = 0.36 < 0.5, so **heating stays OFF**.
+- If the activation threshold is 0.3: HeatingOn = 0.36 > 0.3, so **heating turns ON**.
+
+The threshold is a design choice. In a safety-critical system, you might set it low (better to heat an empty house than freeze a person). In an energy-saving system, you might set it high.
+
+**Core Intuition:** LNN replaces the hard yes/no of Boolean logic with a sliding scale, letting the system make *graded* decisions that reflect the confidence of its inputs.
+
+---
+
+## Part 2B: Product-Sum Soft Logic Operators (W2L2, slide 25)
+
+The t-norms above (Product, Lukasiewicz, Godel) are one family of soft operators. The lecture also introduces a **different** set called **Product-Sum** operators. You need to know both -- the exam may use either.
+
+### Product-Sum Operator Definitions
+
+| Operation | Boolean | Product-Sum Soft Version |
+|-----------|---------|--------------------------|
+| AND | A ∧ B | \\(A \times B\\) (same as product t-norm) |
+| OR | A ∨ B | \\(A + B - A \times B\\) |
+| NOT | ¬A | \\(1 - A\\) |
+
+> **Key difference:** The Product-Sum OR is **not** the same as the Godel (max) OR. Product-Sum OR uses \\(A + B - A \times B\\), which accounts for overlap. Think of it like the probability union formula \\(P(A \cup B) = P(A) + P(B) - P(A \cap B)\\) -- but applied to truth values, not probabilities.
+
+### Worked Example: Exercise 5 (slide 25)
+
+**Question:** F = 0.9, C = 0.7. Compute \\(F \lor C\\) using Product-Sum.
+
+**Solution:**
+
+\\[
+F \lor C = F + C - F \times C = 0.9 + 0.7 - (0.9 \times 0.7) = 1.6 - 0.63 = 0.97
+\\]
+
+**Answer: A (0.97)**
+
+Notice how this is different from the Godel OR: \\(\max(0.9, 0.7) = 0.9\\). The Product-Sum OR gives a **higher** result (0.97 vs 0.9) because it "boosts" the output when both inputs contribute some truth.
+
+### Worked Example: Exercise 6 (slide 25)
+
+**Question:** Compute \\((C \land SOB) \lor F\\) where C = 0.7, SOB = 0.5, F = 0.9 using Product-Sum.
+
+**Solution (step by step):**
+
+Step 1 -- Compute the AND first:
+\\[
+C \land SOB = C \times SOB = 0.7 \times 0.5 = 0.35
+\\]
+
+Step 2 -- Now compute the OR with F:
+\\[
+0.35 \lor F = 0.35 + 0.9 - (0.35 \times 0.9) = 1.25 - 0.315 = 0.935
+\\]
+
+**Answer: C (0.935)**
+
+> **Exam Tip:** When a question says "Product-Sum" or uses the formula \\(A + B - AB\\) for OR, use these operators. When a question says "t-norm" or uses min/max, use the Godel family. Always check which operator family the question specifies.
+
+---
+
+## Part 2C: LNN Architecture -- The Syntax Tree as a Neural Network (W2L2, slides 30--33)
+
+This section explains *how* an LNN is actually structured as a network. It is not just a collection of formulas -- it is a neural network whose architecture mirrors the logical structure.
+
+### The Core Idea: One Neuron Per Logical Node
+
+In a standard neural network, the architecture (number of layers, connections) is a design choice. In an LNN, **the architecture is determined by the logical formula itself**.
+
+Every logical formula can be written as a **syntax tree** -- a tree where:
+- **Leaf nodes** are the input propositions (e.g., Whiskers, Tail, Laser pointer)
+- **Internal nodes** are logical connectives (AND, OR, IMPLIES)
+- **The root** is the final conclusion
+
+In an LNN, each node of this syntax tree becomes a **neuron**. Different connectives use different activation functions:
+- AND nodes use a t-norm activation (e.g., product)
+- OR nodes use a t-conorm activation (e.g., sum-product)
+- IMPLIES nodes use an implication activation
+
+### Example From Lecture (slides 31--32)
+
+Consider these two rules:
+
+- **Rule 1:** Whiskers \\(\otimes\\) Tail \\(\otimes\\) (Laser\_pointer \\(\rightarrow\\) Chases) \\(\rightarrow\\) Cat
+- **Rule 2:** Cat \\(\oplus\\) Dog \\(\rightarrow\\) Pet
+
+Where \\(\otimes\\) = AND (multiplication), \\(\oplus\\) = OR (addition), \\(\rightarrow\\) = implication.
+
+The syntax tree (and therefore the network) looks like:
 
 ```
-Truth Bounds Visualization:
-
-0                   α                   1
-|===================|===================|
-        L_____U                           → FALSE (both below α)
-                        L_____U           → TRUE (both above α)
-              L___________U               → UNCERTAIN (spans α)
-                  U___L                   → CONTRADICTION (L > U)
-```
-
-### Three-Valued Logic Truth Tables (from Slide 35)
-
-**AND ($\wedge$):**
-
-| A | B | A $\wedge$ B |
-|---|---|-------------|
-| T | T | **T** |
-| T | U | **U** |
-| T | F | **F** |
-| U | U | **U** |
-| U | F | **F** |
-| F | F | **F** |
-
-Key rule for AND: **Any F makes the result F. Both must be T for T. Otherwise U.**
-
-**OR ($\vee$):**
-
-| A | B | A $\vee$ B |
-|---|---|-----------|
-| T | T | **T** |
-| T | U | **T** |
-| T | F | **T** |
-| U | U | **U** |
-| U | F | **U** |
-| F | F | **F** |
-
-Key rule for OR: **Any T makes the result T. Both must be F for F. Otherwise U.**
-
-> ⚠️ **Common Misconception**: Students confuse which operator "dominates." For AND, **False dominates** (one False makes everything False). For OR, **True dominates** (one True makes everything True). This is the key to Exercise 8 and the 2025 actual test question.
-
-### LNN Architecture -- Syntax Tree as Network
-
-In LNN, every logical formula is compiled into a computation graph where:
-- **Each node is a neuron** representing a logical operator or proposition
-- **The structure follows the syntax tree** of the formula
-- **Each edge passes truth bounds [L, U]** (not just single values)
-
-```
-Example: (Whiskers ⊗ Tail ⊗ (Laser pointer → Chases)) → Cat
-         (Cat ⊕ Dog) → Pet
-
-                              Pet
-                               |
-                          [⊕ (OR)]
-                          /       \
-                        Cat       Dog
+                        Pet
                          |
-                    [→ (IMPLIES)]
-                    /            \
-            [⊗ (AND)]        (this is Cat)
-           /    |     \
-     Whiskers  Tail  [→ (IMPLIES)]
-                      /          \
-               Laser pointer   Chases
+                    [OR / ⊕]
+                   /         \
+                Cat           Dog
+                 |
+          [IMPLIES →]
+         /           \
+    [AND / ⊗]        Cat
+    /    |    \
+Whiskers Tail [IMPLIES →]
+              /          \
+        Laser_pointer   Chases
 ```
 
-- **$\otimes$ (circled multiply)** = AND-like operation (soft conjunction)
-- **$\oplus$ (circled plus)** = OR-like operation (soft disjunction)
-- **$\rightarrow$ (arrow)** = Implication (if...then)
+Each box is a neuron. The leaf nodes (Whiskers, Tail, Laser\_pointer, Chases, Dog) receive input truth values. The internal nodes compute their logical operations and pass results upward.
 
-### LNN Workflow (from Slides 33, 42)
+### Bidirectional Message Passing
+
+This is what makes LNN special compared to a standard feedforward network. Messages flow in **both directions**:
+
+1. **Upward Pass (bottom-up):** Starting from the leaf nodes, truth values propagate upward through the tree. Each node computes its output from its children's values. This is like *evaluating* the logical expression -- "given these inputs, what is the conclusion?"
+
+2. **Downward Pass (top-down):** Starting from higher-level conclusions, constraints propagate *downward*. If we know the conclusion should be TRUE, the downward pass tightens the bounds on the inputs to ensure logical consistency. This is like *inference* -- "given this conclusion, what must be true about the inputs?"
+
+3. **Iterate Until Convergence:** The upward and downward passes alternate until the bounds stabilise. This ensures global logical consistency across all rules simultaneously.
+
+> **Why this matters:** Bidirectional inference is what allows LNN to do things standard neural networks cannot -- like deducing that if "Pet is TRUE" and "Dog is FALSE," then "Cat must be TRUE" (by the downward pass through Rule 2). A standard feedforward network can only compute in one direction.
+
+> **Common Misconception:** Students sometimes think LNN is just a neural network with logical loss functions. It is more than that -- the *architecture itself* encodes the logical structure, and the bidirectional message passing enforces logical consistency in a way that standard backpropagation does not.
+
+---
+
+## Part 2D: Łukasiewicz-like Logic Formulas (W2L2, slides 40--41)
+
+The lecture presents a specific set of formulas that LNN uses internally, based on **Łukasiewicz logic** with a clamping function.
+
+### The Basis Activation Function
+
+All LNN operations are wrapped in a clamping function:
+
+\\[
+f(x) = \max(0, \min(1, x))
+\\]
+
+This ensures outputs always stay in [0, 1]. If the raw computation gives something negative, it clamps to 0. If it gives something above 1, it clamps to 1.
+
+### Logical AND (Łukasiewicz-style)
+
+\\[
+\bigwedge x_i = f\left(1 - \sum(1 - x_i)\right)
+\\]
+
+**How to read this:** For each input, compute "how far from 1 it is" (that is \\(1 - x_i\\)). Sum those gaps. Subtract from 1. Clamp.
+
+**Example 1:** \\(x_1 = 1, x_2 = 0.5\\)
+\\[
+\bigwedge = f(1 - (1-1) - (1-0.5)) = f(1 - 0 - 0.5) = f(0.5) = 0.5
+\\]
+
+**Example 2:** \\(x_1 = 0, x_2 = 0\\)
+\\[
+\bigwedge = f(1 - (1-0) - (1-0)) = f(1 - 1 - 1) = f(-1) = 0
+\\]
+
+The clamping function catches the negative value and floors it to 0.
+
+### Logical OR (Łukasiewicz-style)
+
+\\[
+\bigvee x_i = f\left(\sum x_i\right)
+\\]
+
+**Example 1:** \\(x_1 = 1, x_2 = 0.5\\)
+\\[
+\bigvee = f(1 + 0.5) = f(1.5) = 1
+\\]
+
+The clamping function catches the value above 1 and caps it to 1.
+
+**Example 2:** \\(x_1 = 0, x_2 = 0\\)
+\\[
+\bigvee = f(0 + 0) = f(0) = 0
+\\]
+
+> **Exam Tip:** Notice that the Łukasiewicz AND formula \\(f(1 - \sum(1 - x_i))\\) for two inputs simplifies to \\(\max(0, x_1 + x_2 - 1)\\), which is exactly the Lukasiewicz t-norm from Part 2. The formula here is just the generalised version for any number of inputs.
+
+---
+
+## Part 3: Truth Value Bounds [L, U] -- Reasoning Under Uncertainty
+
+This section covers the most *advanced* LNN concept tested in COMPSCI 713. It appeared in the 2025 real test for 3 marks. Understanding it deeply will set you apart.
+
+### The Analogy: A Thermometer With a Range
+
+Imagine you have a cheap thermometer. It does not tell you "the temperature is exactly 30.0 degrees." Instead, it tells you "the temperature is somewhere between 28 and 32 degrees." That range [28, 32] is its **bound**.
+
+In LNN, every proposition has a truth value that is not a single number but a **range** [L, U]:
+- **L (lower bound):** At minimum, the proposition is *this* true. Even in the worst-case interpretation of the evidence, the truth is at least L.
+- **U (upper bound):** At most, the proposition is *this* true. Even in the best-case interpretation, the truth is no more than U.
+
+### What Do the Bounds Tell You?
+
+**Narrow bounds = high confidence.** If a proposition has bounds [0.85, 0.90], you are quite sure its truth is around 0.87 or so. The system is confident.
+
+**Wide bounds = high uncertainty.** If a proposition has bounds [0.2, 0.8], the system is saying "I really do not know -- the truth could be anywhere from slightly true to quite true." This is valuable information! A single-point estimate like 0.5 would hide this uncertainty.
+
+### Classifying With a Threshold
+
+Given a threshold \\(\alpha\\), you classify a proposition based on where its bounds sit relative to \\(\alpha\\):
 
 ```
-Step 1: READ INPUTS
-   - Known facts set bounds:
-     e.g., cat is true → L_cat = 1, U_cat = 1
-     e.g., ¬dog → L_dog = 0, U_dog = 0
-   - Unknown propositions: L = 0, U = 1 (complete uncertainty)
+             0                    alpha                   1
+             |----------------------|---------------------|
+                                   
+Case 1:  [=====L==========U====]
+                              ^--- both above alpha
+         L >= alpha  -->  DEFINITELY TRUE
 
-Step 2: BIDIRECTIONAL MESSAGE PASSING (iterate until convergence)
-   
-   Upward Pass (children → parent):
-   - "If dog and cat influence pet, compute pet's bounds from dog and cat"
-   - Parent bounds are TIGHTENED based on children
-   
-   Downward Pass (parent → children):
-   - "If pet is known to be true, what constraints does this put on dog and cat?"
-   - Children bounds are TIGHTENED based on parent
-   
-   Repeat until bounds stop changing (convergence)
+Case 2:             [===L==========U===]
+                    ^--- both below alpha  
+         U < alpha  -->  DEFINITELY FALSE
 
-Step 3: READ FINAL BOUNDS
-   - Inspect target neuron's [L, U]
-   - Apply threshold α to classify as TRUE / FALSE / UNCERTAIN
+Case 3:       [===L========|==========U===]
+                           ^alpha in the middle
+         L < alpha <= U  -->  UNCERTAIN
+```
+
+More precisely:
+
+| Condition | Classification |
+|---|---|
+| \\(L \geq \alpha\\) | **Definitely true** -- even the worst case clears the bar |
+| \\(U < \alpha\\) | **Definitely false** -- even the best case falls short |
+| \\(L < \alpha \leq U\\) | **Uncertain** -- could go either way |
+
+### Complete Bounds Interpretation Table (W2L2, slide 34)
+
+The full set of cases, including the edge case of contradiction:
+
+| L | U | Meaning |
+|---|---|---|
+| 0.0 | 1.0 | **Uncertain:** no information at all -- truth could be anything |
+| \\(L \leq \alpha\\) | \\(U \leq \alpha\\) | **False:** both bounds below threshold |
+| \\(L \geq \alpha\\) | \\(U \geq \alpha\\) | **True:** both bounds above threshold |
+| \\(L > U\\) | — | **Contradiction:** inconsistent logic (should not happen in a well-formed system) |
+
+The contradiction case is important conceptually: if during bidirectional inference the bounds cross (lower exceeds upper), it signals that the rules in the system are logically inconsistent.
+
+### Three-Valued Logic Table (W2L2, slide 35)
+
+Before we get to continuous bounds, it helps to understand the **three-valued** logic that sits between Boolean (two values) and full continuous LNN. Here, each proposition can be **True (T)**, **False (F)**, or **Uncertain (U)**.
+
+| A | B | A ∧ B | A ∨ B |
+|---|---|-------|-------|
+| T | T | T | T |
+| T | U | U | T |
+| T | F | F | T |
+| U | U | U | U |
+| U | F | F | U |
+| F | F | F | F |
+
+**Key observations to memorise:**
+
+- **AND rule of thumb:** If *either* input is False → result is False. If *both* are True → True. If one is Uncertain and the other is not False → stays Uncertain.
+- **OR rule of thumb:** If *either* input is True → result is True. If *both* are False → False. If one is Uncertain and the other is not True → stays Uncertain.
+
+Think of Uncertain as a "weak" value: AND cannot promote it (only False dominates it), and OR cannot demote it (only True dominates it).
+
+> **Why this matters for the exam:** The three-valued table is the conceptual foundation for bounds-based classification. When you have bounds [L, U] that span the threshold \\(\alpha\\), you are essentially in the "Uncertain" row of this table. Understanding how AND and OR interact with Uncertain values helps you quickly reason about compound formulas without doing full bound arithmetic.
+
+### Worked Example: Exercise 7 (W2L2, slides 36--37)
+
+**Question:** Given L = 0.3, U = 0.7, threshold \\(\alpha = 0.5\\). Classify the proposition.
+
+**Solution:**
+
+- \\(L = 0.3 < \alpha = 0.5\\) → not definitely true
+- \\(U = 0.7 > \alpha = 0.5\\) → not definitely false
+- Therefore: \\(L < \alpha \leq U\\)
+
+**Answer: C (Uncertain)** -- the bounds span both sides of the threshold. We cannot determine truth or falsity from the available information.
+
+### Worked Example: Exercise 8 (W2L2, slides 38--39)
+
+**Question:** Given:
+- Sharp = [0.2, 0.8]
+- Heavy = [0.6, 1.0]
+- Threshold \\(\alpha = 0.5\\)
+- Rule: Dangerous \\(\leftarrow\\) Sharp \\(\lor\\) Heavy
+
+Classify Dangerous.
+
+**Solution (using three-valued reasoning):**
+
+Step 1 -- Classify each input individually:
+- **Heavy:** \\(L = 0.6 \geq \alpha = 0.5\\) → Heavy is **TRUE**
+- **Sharp:** \\(L = 0.2 < \alpha = 0.5\\), \\(U = 0.8 > \alpha = 0.5\\) → Sharp is **UNCERTAIN**
+
+Step 2 -- Apply the three-valued OR table:
+- TRUE ∨ UNCERTAIN = **TRUE** (from the table above: if either input is True, OR is True)
+
+**Answer: A (Definitely True)**
+
+The key insight: because Dangerous uses OR, and Heavy is already TRUE on its own, it does not matter that Sharp is uncertain. One true input is enough for OR. If the rule had been AND instead, the uncertainty in Sharp would have made the result UNCERTAIN.
+
+> **Exam Tip:** This exercise tests whether you can shortcut the computation using three-valued logic. You do not need to compute full bound arithmetic here -- just classify each input, look up the three-valued table, and read off the answer. This saves time under exam pressure.
+
+---
+
+### Why This Matters: The Self-Driving Car Example
+
+This is the exact scenario from the 2025 real test. An autonomous vehicle has two sensors:
+- P: "The object is very close" with bounds [0.8, 0.9]
+- Q: "The object is moving fast" with bounds [0.3, 0.6]
+
+The vehicle should trigger a collision alert if P OR Q is true (either condition is dangerous). The threshold is \\(\alpha = 0.7\\).
+
+If we only had single-point estimates (say P = 0.85, Q = 0.45), we might compute OR and get a single number. But with bounds, we can determine whether the conclusion is *guaranteed* to be true even in the worst case -- which is exactly what you want before slamming the brakes at highway speed.
+
+---
+
+## Part 4: Computing Bounds for OR and AND
+
+### OR Bounds: \\(P \lor Q\\)
+
+\\[
+L_{P \lor Q} = \max(L_P,\; L_Q)
+\\]
+\\[
+U_{P \lor Q} = \max(U_P,\; U_Q)
+\\]
+
+**Intuition:** OR is satisfied if *either* input is true. So:
+- The lower bound of OR = the best (highest) lower bound among the inputs. If at least one input is guaranteed to be at least 0.8, then the OR is guaranteed to be at least 0.8.
+- The upper bound of OR = the best (highest) upper bound among the inputs. The OR could be as high as the most optimistic individual input.
+
+**Worked example (2025 real test):**
+
+Given:
+- P = [0.8, 0.9]
+- Q = [0.3, 0.6]
+
+\\[
+L_{\text{Alert}} = \max(0.8,\; 0.3) = 0.8
+\\]
+\\[
+U_{\text{Alert}} = \max(0.9,\; 0.6) = 0.9
+\\]
+
+Alert has bounds **[0.8, 0.9]**.
+
+Classification with \\(\alpha = 0.7\\):
+- \\(L = 0.8 \geq 0.7 = \alpha\\)
+- Therefore: **Definitely true**
+
+The alert should trigger. Even in the worst-case interpretation of the sensor data, the danger level exceeds our threshold.
+
+### AND Bounds (Lukasiewicz): \\(P \land Q\\)
+
+\\[
+L_{P \land Q} = \max(0,\; L_P + L_Q - 1)
+\\]
+\\[
+U_{P \land Q} = \min(U_P,\; U_Q)
+\\]
+
+**Intuition:** AND requires *both* inputs to be true. So:
+- The lower bound uses the Lukasiewicz formula -- the overlap. Both inputs need to contribute, and the overlap shrinks as either input gets less certain.
+- The upper bound is the *minimum* of the individual upper bounds. AND can never be more true than its weakest input (in the best case).
+
+**Worked example:**
+
+Given P = [0.8, 0.9], Q = [0.3, 0.6]:
+
+\\[
+L_{P \land Q} = \max(0,\; 0.8 + 0.3 - 1) = \max(0,\; 0.1) = 0.1
+\\]
+\\[
+U_{P \land Q} = \min(0.9,\; 0.6) = 0.6
+\\]
+
+Result: [0.1, 0.6]. With \\(\alpha = 0.7\\), since \\(U = 0.6 < 0.7\\), this is **definitely false**.
+
+Notice the contrast: OR gave [0.8, 0.9] (definitely true), AND gave [0.1, 0.6] (definitely false). Makes sense -- the "object is moving fast" input is too uncertain to pass AND, but the "object is close" input is strong enough to trigger OR alone.
+
+> **Warning:** A very common mistake is using \\(\min\\) for the upper bound of OR. The upper bound of OR uses **max**, not min. Think about it: if one input could be as high as 0.9, then the OR could also be as high as 0.9 -- you take the best case, not the worst.
+
+---
+
+## Part 5: Every Past Paper LNN Question -- Fully Worked
+
+### 2026 Sample Test, Question 2 [4 marks]
+
+This is the *highest-value* LNN question across all tests. Let us nail every mark.
+
+**The setup:**
+
+> A smart home system uses an LNN with the rule:
+> HeatingOn \\(\leftarrow\\) Cold \\(\otimes\\) AtHome
+>
+> (a) What does this rule represent in natural language, and how is it different from a standard Boolean rule? [2 marks]
+>
+> (b) Cold = 0.9, AtHome = 0.4. Compute HeatingOn. Should heating activate? [2 marks]
+
+**Model answer for (a) -- targeting 2 marks:**
+
+"If it is cold and someone is at home, then turn on the heating system." [1 mark for correct natural-language reading]
+
+In standard Boolean logic, both Cold and AtHome must be strictly True (1) or False (0), and AND requires both to be exactly 1 for HeatingOn to be True. In an LNN, the \\(\otimes\\) operator is a soft conjunction that operates over continuous truth values in [0, 1]. It accepts partial inputs such as 0.9 or 0.4, producing an intermediate activation that reflects the degree of confidence. This makes the logic differentiable and suitable for gradient-based learning. [1 mark for explaining continuous values / differentiability vs. strict binary]
+
+**Mark allocation:**
+- 1 mark: correct natural-language reading of the rule
+- 1 mark: explaining that LNN uses continuous [0,1] values and/or is differentiable, versus Boolean's strict {0, 1}
+
+**Model answer for (b) -- targeting 2 marks:**
+
+Using the product t-norm for the soft AND:
+
+\\[
+\text{HeatingOn} = \text{Cold} \times \text{AtHome} = 0.9 \times 0.4 = 0.36
+\\]
+
+[1 mark for correct computation]
+
+Whether the heating activates depends on the classification threshold. Since 0.36 is relatively low, it would not activate at a typical threshold (e.g., 0.5 or 0.7). If the threshold were set lower (e.g., 0.3), the heating would activate. The low value reflects that while it is quite cold (0.9), there is low confidence that someone is at home (0.4), and the product t-norm penalises this weak input. [1 mark for discussing threshold and activation decision]
+
+**Mark allocation:**
+- 1 mark: correct numerical computation (0.36)
+- 1 mark: discussing whether the system activates based on threshold
+
+---
+
+### 2025 Sample Test, Question 2 [2 marks]
+
+Same scenario as above but with **fewer marks**, so shorter answers are expected.
+
+**The setup:**
+
+> (a) Natural language + Boolean difference. [1 mark]
+> (b) Cold = 0.9, AtHome = 0.4. Qualitative answer OK. [1 mark]
+
+**Model answer for (a) -- targeting 1 mark:**
+
+"If it is cold and someone is at home, then turn on the heating." In Boolean logic, both must be strictly 1; in LNN, the \\(\otimes\\) operator works over continuous values in [0, 1], allowing partial truth.
+
+**Model answer for (b) -- targeting 1 mark:**
+
+Using soft-AND (e.g., product t-norm), HeatingOn \\(\approx\\) 0.9 \\(\times\\) 0.4 = 0.36. This is relatively low, so the system likely would not activate the heating unless the threshold is set very low.
+
+> **Exam Strategy:** Notice the 2025 sample awards 1 mark for part (b) and says "qualitative OK." This means you do not strictly need to compute 0.36 -- you could say "the result would be low because the AND operator is dragged down by the weak AtHome input." But computing the number takes 5 seconds and makes your answer stronger. Always compute if you can.
+
+---
+
+### 2025 Real Test, Question 2 [3 marks]
+
+This is the bounds question. The highest-difficulty LNN question seen so far.
+
+**The setup:**
+
+> An autonomous vehicle uses an LNN to decide whether to trigger a collision alert.
+> - P: "The object is very close" (\\(L_P = 0.8, U_P = 0.9\\))
+> - Q: "The object is moving fast" (\\(L_Q = 0.3, U_Q = 0.6\\))
+>
+> Alert \\(\leftarrow\\) P \\(\lor\\) Q, threshold \\(\alpha = 0.7\\)
+>
+> (a) Is the alert status: A. definitely true, B. definitely false, C. uncertain? [1 mark]
+> (b) Why is using bounds beneficial in safety-critical applications? [2 marks]
+
+**Model answer for (a) -- targeting 1 mark:**
+
+Using OR bound rules:
+- \\(L_{\text{Alert}} = \max(L_P, L_Q) = \max(0.8, 0.3) = 0.8\\)
+- \\(U_{\text{Alert}} = \max(U_P, U_Q) = \max(0.9, 0.6) = 0.9\\)
+
+Since \\(L_{\text{Alert}} = 0.8 \geq \alpha = 0.7\\), the classification is: **A. Definitely true**.
+
+> **Exam Tip:** Even though the question says "no proof required," showing the computation takes 10 seconds and protects you if you circle the wrong letter by accident. The marker can still see you understood the method.
+
+**Model answer for (b) -- targeting 2 marks:**
+
+Any two of these four points earn full marks (from the 2025 marking rubric):
+
+1. **Expressing uncertainty explicitly.** Bounds directly represent the confidence level. A single probability of 0.85 hides the fact that the truth could be anywhere from 0.8 to 0.9 -- which is very different from 0.5 to 1.0 (same average but much more uncertain).
+
+2. **Supporting conservative decision-making.** In safety-critical domains like autonomous driving, the system can treat the "uncertain" zone as a reason to act cautiously. If the lower bound is below the threshold, the vehicle might slow down and gather more sensor data rather than take irreversible action.
+
+3. **Robustness to noisy or incomplete data.** Sensors may fail or provide noisy readings. Bounds propagate this uncertainty through the logical reasoning chain, so the system knows *how uncertain* its final decision is, rather than presenting a false sense of precision.
+
+4. **Better interpretability.** Engineers and operators can inspect the bounds to understand how certain the model is about each conclusion. A decision with bounds [0.85, 0.90] is far more trustworthy than one with bounds [0.3, 0.9], and the system can flag the latter for human review.
+
+---
+
+## Part 6: Practice Problems With Full Solutions
+
+### Problem 1: Lukasiewicz T-Norm Computation
+
+**Question:** A fire alarm system uses the rule: Alarm \\(\leftarrow\\) Smoke \\(\otimes\\) Heat. Given Smoke = 0.7 and Heat = 0.6, compute the Alarm activation using the Lukasiewicz t-norm. Should the alarm sound if the threshold is 0.5?
+
+**Solution:**
+
+\\[
+\text{Alarm} = \max(0,\; 0.7 + 0.6 - 1) = \max(0,\; 0.3) = 0.3
+\\]
+
+Since 0.3 < 0.5, the alarm does **not** sound.
+
+Notice: with the product t-norm, we would get 0.7 \\(\times\\) 0.6 = 0.42, still below 0.5. With the Godel t-norm, we would get min(0.7, 0.6) = 0.6, which *would* trigger the alarm. The choice of t-norm matters!
+
+---
+
+### Problem 2: OR Bounds With Classification
+
+**Question:** A hospital monitoring system uses: CriticalAlert \\(\leftarrow\\) HighFever \\(\lor\\) LowOxygen. Given:
+- HighFever = [0.6, 0.8]
+- LowOxygen = [0.5, 0.7]
+
+Classify the alert with threshold \\(\alpha = 0.65\\).
+
+**Solution:**
+
+\\[
+L_{\text{Alert}} = \max(0.6, 0.5) = 0.6
+\\]
+\\[
+U_{\text{Alert}} = \max(0.8, 0.7) = 0.8
+\\]
+
+Bounds: [0.6, 0.8].
+
+Since \\(L = 0.6 < \alpha = 0.65 \leq U = 0.8\\), the classification is: **C. Uncertain**.
+
+The system cannot confidently say the patient is critical, but it cannot rule it out either. In a hospital, this would trigger a "monitor closely" status rather than a full emergency or an all-clear.
+
+---
+
+### Problem 3: Natural Language Interpretation
+
+**Question:** Given the LNN rule: Irrigate \\(\leftarrow\\) DrySoil \\(\otimes\\) CropGrowing, explain in natural language what this rule means and how it differs from a standard Boolean rule.
+
+**Solution:**
+
+"If the soil is dry and a crop is currently growing, then the irrigation system should activate."
+
+In Boolean logic, both DrySoil and CropGrowing must be strictly True (1) for irrigation to occur. In LNN, the \\(\otimes\\) operator allows continuous truth values. For example, if DrySoil = 0.7 (moderately dry) and CropGrowing = 0.9 (crop is almost certainly growing), the product t-norm gives 0.63 -- moderate confidence that irrigation is needed. This continuous output enables proportional responses (e.g., watering at 63% capacity rather than full blast or nothing).
+
+---
+
+### Problem 4: AND Bounds With Lukasiewicz
+
+**Question:** Given P = [0.7, 0.9] and Q = [0.5, 0.8], compute the bounds for R \\(\leftarrow\\) P \\(\land\\) Q using Lukasiewicz AND bounds. Classify with \\(\alpha = 0.5\\).
+
+**Solution:**
+
+\\[
+L_R = \max(0,\; L_P + L_Q - 1) = \max(0,\; 0.7 + 0.5 - 1) = \max(0,\; 0.2) = 0.2
+\\]
+\\[
+U_R = \min(U_P,\; U_Q) = \min(0.9,\; 0.8) = 0.8
+\\]
+
+Bounds: [0.2, 0.8].
+
+Since \\(L = 0.2 < \alpha = 0.5 \leq U = 0.8\\), the classification is: **Uncertain**.
+
+---
+
+### Problem 5: Why Not Just a Single Probability?
+
+**Question:** "An LNN system reports that a proposition has bounds [0.4, 0.9]. A simpler system reports the same proposition with a single probability of 0.65. Why is the LNN representation more useful?"
+
+**Solution:**
+
+The single probability of 0.65 suggests moderate confidence, but it hides crucial information about how *uncertain* that estimate is. The bounds [0.4, 0.9] reveal that the truth could be anywhere from "probably false" (0.4) to "very likely true" (0.9) -- a massive range.
+
+In practice, a decision-maker would treat these very differently:
+- A proposition with bounds [0.6, 0.7] and average 0.65 is fairly reliable -- act on it.
+- A proposition with bounds [0.4, 0.9] and average 0.65 is highly uncertain -- gather more evidence before acting.
+
+A single probability collapses these two very different situations into the same number.
+
+---
+
+### Problem 6: Compare All Three T-Norms
+
+**Question:** Given A = 0.8 and B = 0.5, compute the soft AND using all three t-norms and rank the results.
+
+**Solution:**
+
+| T-Norm | Computation | Result |
+|--------|-------------|--------|
+| Product | 0.8 \\(\times\\) 0.5 | **0.40** |
+| Lukasiewicz | \\(\max(0, 0.8 + 0.5 - 1) = \max(0, 0.3)\\) | **0.30** |
+| Godel (min) | \\(\min(0.8, 0.5)\\) | **0.50** |
+
+Ranking from highest to lowest: Godel (0.50) > Product (0.40) > Lukasiewicz (0.30).
+
+This ordering is always the same: **Godel \\(\geq\\) Product \\(\geq\\) Lukasiewicz** for any inputs in [0, 1]. Godel is the most generous (only limited by the weakest input), Lukasiewicz is the most demanding (requires significant overlap).
+
+> **Exam Tip:** This ordering relationship is useful to remember. If a question gives you a result and asks which t-norm could have produced it, the ordering helps you narrow it down.
+
+---
+
+## Part 7: How to Write the Perfect Exam Answer
+
+The lecturer emphasises "quality over quantity" and "concise and clear." Here is exactly what to write for each mark level.
+
+### 1-Mark LNN Question (Qualitative)
+
+**Example:** "Explain how the LNN computes HeatingOn given Cold = 0.9 and AtHome = 0.4."
+
+**Write this:**
+
+> "The LNN applies a soft AND (e.g., product t-norm) to the continuous inputs: 0.9 \\(\times\\) 0.4 = 0.36. Since this is relatively low, the system would likely not activate the heating unless the threshold is set below 0.36."
+
+That is two sentences. Done. Do not write a paragraph about what LNN is -- the question assumes you know.
+
+### 2-Mark LNN Question (Natural Language + Boolean Contrast)
+
+**Example:** "What does HeatingOn \\(\leftarrow\\) Cold \\(\otimes\\) AtHome mean in natural language? How is it different from Boolean AND?"
+
+**Write this:**
+
+> "In natural language: 'If it is cold and someone is at home, turn on the heating.' In Boolean logic, both inputs must be strictly True (1) to produce True. In LNN, the \\(\otimes\\) operator performs a soft AND over continuous truth values in [0, 1], allowing partial inputs like 0.4 or 0.9 to produce an intermediate output. This makes the logic differentiable and trainable via gradient descent."
+
+Four sentences. Covers both marks cleanly.
+
+### 3-Mark LNN Question (Bounds + Benefits)
+
+**Example:** "Compute OR bounds for Alert \\(\leftarrow\\) P \\(\lor\\) Q given P=[0.8,0.9], Q=[0.3,0.6], \\(\alpha\\)=0.7. Then explain why bounds are beneficial."
+
+**Write this:**
+
+> "\\(L_{\text{Alert}} = \max(0.8, 0.3) = 0.8\\). \\(U_{\text{Alert}} = \max(0.9, 0.6) = 0.9\\). Since \\(L = 0.8 \geq \alpha = 0.7\\), the alert is definitely true.
+>
+> Bounds are beneficial because they explicitly represent uncertainty: the system knows *how confident* it is, not just a point estimate. In safety-critical applications like autonomous driving, this allows conservative decision-making -- the system can act cautiously when the lower bound is below the threshold, rather than relying on an overconfident single value."
+
+Six sentences total. Computation + two clear reasons.
+
+---
+
+## Part 8: Common Traps -- Explained in Depth
+
+### Trap 1: Truth Values Are NOT Probabilities
+
+This is the most common mistake in student answers, and it costs marks.
+
+| Aspect | LNN Truth Value | Probability |
+|---|---|---|
+| What it measures | Degree of truth / membership | Likelihood of an event |
+| Range | [0, 1] | [0, 1] |
+| Interpretation of 0.6 | "This is 0.6 true" (like fuzzy membership) | "There is a 60% chance this happens" |
+| Can you add them? | No -- they do not sum to 1 | Yes -- complementary events sum to 1 |
+| Framework | Fuzzy logic / t-norms | Bayesian / frequentist statistics |
+
+**Why students confuse them:** Both use numbers between 0 and 1. But the operations are completely different. For probabilities, P(A AND B) = P(A) \\(\times\\) P(B) *only if A and B are independent*. For LNN truth values, the t-norm is always applied regardless of independence -- it is a matter of logical structure, not statistical independence.
+
+**How to avoid losing marks:** Never write "there is a 36% probability the heating should turn on." Write "the truth value of HeatingOn is 0.36" or "the degree of truth is 0.36."
+
+### Trap 2: Different T-Norms Give Different Results
+
+Some students assume all t-norms are interchangeable. They are not. For Cold = 0.9, AtHome = 0.4:
+
+- Product: 0.36
+- Lukasiewicz: 0.30
+- Godel: 0.40
+
+A threshold of 0.35 would give different decisions depending on the t-norm:
+- Product (0.36 > 0.35): Heating ON
+- Lukasiewicz (0.30 < 0.35): Heating OFF
+- Godel (0.40 > 0.35): Heating ON
+
+**How to avoid losing marks:** Always state which t-norm you are using. If the question does not specify, say "Using the product t-norm (the most common choice)..." and then compute.
+
+### Trap 3: OR Bounds Use MAX for Both L and U
+
+Many students incorrectly use min for the upper bound of OR. Let us see why max is correct.
+
+Think about it concretely: P has upper bound 0.9, Q has upper bound 0.6.
+
+The OR of P and Q asks: "Is at least one of them true?" In the best case, P could be as high as 0.9. Since OR only needs *one* input to be true, the best case for OR is the best case among the inputs: max(0.9, 0.6) = 0.9.
+
+If you used min, you would get 0.6 -- which would say "the OR can be at most 0.6." But that is wrong! P alone could be 0.9, which would make the OR at least 0.9.
+
+**Memory aid:** OR is the "optimistic" connective -- it takes the best from each input for both bounds. AND is the "pessimistic" connective -- it takes the worst upper bound and an even lower lower bound.
+
+### Trap 4: Checking the Wrong Value Against the Threshold
+
+For classification:
+- Check **L** against \\(\alpha\\) for "definitely true" (L \\(\geq\\) \\(\alpha\\))
+- Check **U** against \\(\alpha\\) for "definitely false" (U < \\(\alpha\\))
+- If neither, it is "uncertain"
+
+Students sometimes check only the midpoint of [L, U] or check U for "definitely true." Remember: "definitely true" means *even in the worst case (the lower bound) you clear the threshold.*
+
+### Trap 5: Forgetting That LNN Extends Classical Logic (Not Replaces It)
+
+LNN does not throw away classical logic. When truth values are exactly 0 or 1, all t-norms produce the same result as Boolean AND. Classical logic is a *special case* of LNN -- the case where there is no uncertainty.
+
+This matters for exam framing. Never write "LNN replaces Boolean logic." Write "LNN *extends* Boolean logic to handle continuous truth values."
+
+---
+
+## Part 9: The Big Picture -- Classical Logic vs LNN
+
+| Aspect | Classical Logic | LNN |
+|---|---|---|
+| Truth values | {0, 1} only | [0, 1] continuous |
+| AND operator | Both must be exactly 1 | Soft \\(\otimes\\): product, Lukasiewicz, or Godel |
+| OR operator | At least one must be 1 | Soft disjunction with bounds |
+| Uncertainty handling | Not representable | Bounds [L, U] capture confidence range |
+| Trainable? | No -- rules are fixed by humans | Yes -- differentiable, uses gradient descent |
+| Interpretability | Full -- every step is transparent | High -- logical structure is preserved |
+| Real-world inputs | Must round to 0 or 1 (lossy) | Uses raw sensor values (no rounding) |
+| When to use | Rules are known and inputs are certain | Rules may be uncertain, inputs are noisy |
+| Exam tip | Always describe as the baseline to contrast against | Always contrast with this column |
+
+---
+
+## Part 10: Useful Exam Phrases
+
+### Explaining the \\(\otimes\\) Operator
+
+- "The \\(\otimes\\) operator is a soft conjunction that generalises Boolean AND to continuous truth values in [0, 1]."
+- "Unlike Boolean AND, which requires both inputs to be strictly 1, the soft AND accepts partial truth values and produces an intermediate output reflecting the combined confidence."
+- "This makes the logical operation differentiable, enabling gradient-based learning while preserving the logical structure."
+
+### Explaining Bounds
+
+- "The bounds [L, U] capture the range of possible truth values, explicitly representing the system's uncertainty about a proposition."
+- "A narrow bound (e.g., [0.85, 0.90]) indicates high confidence, while a wide bound (e.g., [0.3, 0.8]) indicates significant uncertainty."
+- "When the lower bound exceeds the threshold, the formula is classified as definitely true -- even in the worst-case interpretation of the evidence."
+
+### Explaining Benefits in Safety-Critical Applications
+
+- "Bounds allow the system to distinguish between confident and uncertain conclusions, which is essential in safety-critical domains where overconfident decisions can be fatal."
+- "Rather than collapsing all information into a single point estimate, bounds preserve the uncertainty from noisy or incomplete sensor data throughout the reasoning chain."
+
+---
+
+## Part 11: Quick-Reference Formula Card
+
+Copy this to your handwritten notes sheet for the exam:
+
+```
+SOFT AND (t-norms):
+  Product:      A x B
+  Lukasiewicz:  max(0, A + B - 1)
+  Godel (min):  min(A, B)
+
+PRODUCT-SUM OPERATORS:
+  AND:  A x B
+  OR:   A + B - A x B
+  NOT:  1 - A
+
+ŁUKASIEWICZ-LIKE (clamped):
+  AND:  f(1 - Σ(1 - x_i))     where f(x) = max(0, min(1, x))
+  OR:   f(Σ x_i)
+
+OR BOUNDS:
+  L_OR = max(L_P, L_Q)
+  U_OR = max(U_P, U_Q)
+
+AND BOUNDS (Lukasiewicz):
+  L_AND = max(0, L_P + L_Q - 1)
+  U_AND = min(U_P, U_Q)
+
+CLASSIFICATION with threshold alpha:
+  L >= alpha        -->  Definitely true
+  U < alpha         -->  Definitely false
+  L < alpha <= U    -->  Uncertain
+
+KEY EXAMPLE:
+  Cold=0.9, AtHome=0.4
+  Product: 0.9 x 0.4 = 0.36
 ```
 
 ---
 
-## 🔄 Worked Examples -- Every Computation Step
-
-### === EXAM QUESTION TYPE 1: Interpret LNN Rule + Compute Soft AND ===
-
-This is the most frequently tested pattern. It appears in the Sample Test 2025, Sample Test 2026, and closely matches the lecture exercises.
-
----
-
-### Worked Example 1: HeatingOn Rule (Sample Test 2025 Q2, Sample Test 2026 Q2)
-
-**Question:**
-A smart home system uses an LNN with the rule:
-
-$$\text{HeatingOn} \leftarrow \text{Cold} \otimes \text{AtHome}$$
-
-(a) What does this rule represent in natural language? How is it different from a standard Boolean rule?
-
-(b) Given Cold = 0.9, AtHome = 0.4, compute HeatingOn. Would the system activate?
-
-**Model Answer (a) -- 1-2 marks:**
-
-> This rule reads: "If it is cold AND someone is at home, then the heating system should be turned on."
->
-> In **standard Boolean logic**, both Cold and AtHome must be strictly True (= 1) for HeatingOn to fire. The output is binary: heating is either fully ON or fully OFF.
->
-> In **LNN**, the $\otimes$ operator is a **differentiable soft conjunction** over continuous truth values in [0, 1]. It accepts partial inputs (like Cold = 0.9, AtHome = 0.4) and produces an intermediate activation (like 0.36), reflecting **degrees of truth**. This enables:
-> - Gradient-based learning of operator weights
-> - Nuanced outputs that reflect uncertainty
-> - Threshold-dependent decisions
-
-**Model Answer (b) -- 1-2 marks:**
-
-> Using the **Product-Sum** soft AND:
->
-> $$\text{HeatingOn} = \text{Cold} \times \text{AtHome} = 0.9 \times 0.4 = 0.36$$
->
-> Whether heating activates depends on the **classification threshold**:
-> - If threshold is **low** (e.g., $\alpha = 0.3$): HeatingOn = 0.36 > 0.3, so **heating turns ON**
-> - If threshold is **high** (e.g., $\alpha = 0.7$): HeatingOn = 0.36 < 0.7, so **heating stays OFF**
-
-**Scoring Notes from the official answer key:**
-- (a): 1 mark for natural language, 1 mark for explaining the difference with Boolean (the $\otimes$ operator supports continuous values and gradient learning)
-- (b): 1 mark for computing the product correctly, 1 mark for mentioning threshold-dependent activation
-
----
-
-### === EXAM QUESTION TYPE 2: LNN Bounds with OR (Safety-Critical) ===
-
-This appeared in the **Actual Mid-Semester Test S1 2025 Q2** (3 marks).
-
----
-
-### Worked Example 2: Autonomous Vehicle Alert (Actual Test 2025 Q2)
-
-**Question:**
-An autonomous vehicle uses an LNN to decide whether to trigger a collision alert based on two conditions:
-- P: "The object is very close" ($L_P = 0.8, U_P = 0.9$)
-- Q: "The object is moving fast" ($L_Q = 0.3, U_Q = 0.6$)
-
-Rule: Alert $\leftarrow$ P $\vee$ Q
-
-Threshold $\alpha = 0.7$.
-
-(a) Is the alert status: definitely true, definitely false, or uncertain? [1 mark]
-
-(b) Why is using bounds (instead of a single probability) beneficial in safety-critical applications? [2 marks]
-
-**Model Answer (a):**
-
-For OR with truth bounds, we compute:
-
-$$L_{\text{Alert}} = \max(L_P, L_Q) = \max(0.8, 0.3) = 0.8$$
-
-$$U_{\text{Alert}} = \max(U_P, U_Q) = \max(0.9, 0.6) = 0.9$$
-
-Now apply the threshold $\alpha = 0.7$:
-
-$$L_{\text{Alert}} = 0.8 \ge 0.7 = \alpha$$
-
-Since the **lower bound is already above** the threshold, the alert is **A. Definitely True**.
-
-> **Why $\max$ for OR bounds?** In three-valued logic, OR only needs one True input to be True. If P's lower bound alone exceeds the threshold, then regardless of Q, the OR result must be at least that high.
-
-**Model Answer (b) -- any two of the following earn full marks:**
-
-1. **Expressing Uncertainty Explicitly**: Bounds allow the system to represent *how confident* it is about a truth value. A single probability of 0.85 hides whether the system is very sure (bounds [0.84, 0.86]) or deeply uncertain (bounds [0.3, 1.0]).
-
-2. **Supporting Conservative Decision-Making**: In safety-critical applications like autonomous driving, the system should err on the side of caution. If the lower bound is below the threshold, the system can choose to slow down or stop rather than take a risky action based on an overconfident point estimate.
-
-3. **Robustness to Noisy or Incomplete Data**: Sensors may fail or provide noisy signals. Bounds propagate this uncertainty from inputs to outputs, letting the system know how unreliable the final decision is.
-
-4. **Better Interpretability**: Engineers and operators can inspect the bounds to understand how certain the model is about its decision. This improves debugging, transparency, and trust in the AI system.
-
----
-
-### Worked Example 3: Lecture Exercise 5 -- Product-Sum OR
-
-**Given:** Fever (F) = 0.9, Cough (C) = 0.7
-
-**Compute:** $F \vee C$ using Product-Sum
-
-$$F \vee C = F + C - F \times C$$
-
-$$= 0.9 + 0.7 - (0.9 \times 0.7)$$
-
-$$= 1.6 - 0.63$$
-
-$$= 0.97$$
-
-**Answer: A) 0.97**
-
----
-
-### Worked Example 4: Lecture Exercise 6 -- Nested AND then OR
-
-**Given:** F = 0.9, C = 0.7, SOB = 0.5
-
-**Compute:** $(C \wedge \text{SOB}) \vee F$
-
-**Step 1:** Compute $C \wedge \text{SOB}$ (AND = product):
-
-$$C \wedge \text{SOB} = 0.7 \times 0.5 = 0.35$$
-
-**Step 2:** Compute $(C \wedge \text{SOB}) \vee F$ (OR = A+B-AB):
-
-$$0.35 + 0.9 - (0.35 \times 0.9)$$
-
-$$= 1.25 - 0.315$$
-
-$$= 0.935$$
-
-**Answer: C) 0.935**
-
----
-
-### Worked Example 5: Lecture Exercise 7 -- Truth Bounds Classification
-
-**Given:** $L = 0.3$, $U = 0.7$, $\alpha = 0.5$
-
-**Analysis:**
-- Is $L \ge \alpha$? $0.3 \ge 0.5$? **No.**
-- Is $U \le \alpha$? $0.7 \le 0.5$? **No.**
-- So $L < \alpha < U$ (0.3 < 0.5 < 0.7)
-
-**Answer: C) The neuron's truth value is uncertain.**
-
-The bounds span both sides of the threshold, so we cannot classify it as definitely true or definitely false.
-
----
-
-### Worked Example 6: Lecture Exercise 8 -- Three-Valued OR with Mixed Inputs
-
-**Given:**
-- Sharp: $L_{\text{sharp}} = 0.2$, $U_{\text{sharp}} = 0.8$
-- Heavy: $L_{\text{heavy}} = 0.6$, $U_{\text{heavy}} = 1.0$
-- $\alpha = 0.5$
-- Rule: Dangerous $\leftarrow$ Sharp $\vee$ Heavy
-
-**Step 1: Classify each input**
-
-Heavy: $L = 0.6 \ge 0.5 = \alpha$ AND $U = 1.0 \ge 0.5 = \alpha$ $\Rightarrow$ **Heavy is TRUE**
-
-Sharp: $L = 0.2 < 0.5 < 0.8 = U$ $\Rightarrow$ **Sharp is UNCERTAIN**
-
-**Step 2: Apply three-valued OR**
-
-From the truth table: $T \vee U = T$
-
-Since Heavy is already TRUE, and OR only needs one True input, the result is:
-
-**Answer: A) The object is definitely dangerous.**
-
-> This is a critical reasoning pattern: in OR, one TRUE input is enough to guarantee TRUE output, regardless of the other input's uncertainty.
-
----
-
-### Worked Example 7: Lukasiewicz AND (from Slide 40)
-
-**Example 1:** $x_1 = 1$, $x_2 = 0.5$
-
-$$\text{AND}(x_1, x_2) = f\left(1 - \sum_i(1-x_i)\right) = f(1 - (0 + 0.5)) = f(0.5) = 0.5$$
-
-**Example 2:** $x_1 = 0$, $x_2 = 0$
-
-$$\text{AND}(x_1, x_2) = f(1 - (1 + 1)) = f(-1) = \max(0, -1) = 0$$
-
-**Example 3:** Lukasiewicz OR from Slide 41: $x_1 = 1$, $x_2 = 0.5$
-
-$$\text{OR}(x_1, x_2) = f\left(\sum_i x_i\right) = f(1 + 0.5) = f(1.5) = \min(1, 1.5) = 1$$
-
-**Example 4:** Lukasiewicz OR: $x_1 = 0$, $x_2 = 0$
-
-$$\text{OR}(x_1, x_2) = f(0 + 0) = f(0) = 0$$
-
----
-
-### Worked Example 8: Comparing All Three T-Norms
-
-**Given:** $A = 0.9$, $B = 0.4$
-
-| Operation | Product | Lukasiewicz | Godel |
-|-----------|---------|-------------|-------|
-| AND($A$,$B$) | $0.9 \times 0.4 = 0.36$ | $\max(0, 0.9+0.4-1) = 0.30$ | $\min(0.9, 0.4) = 0.40$ |
-| OR($A$,$B$) | $0.9+0.4-0.36 = 0.94$ | $\min(1, 0.9+0.4) = 1.0$ | $\max(0.9, 0.4) = 0.90$ |
-| NOT($A$) | $1-0.9 = 0.10$ | $1-0.9 = 0.10$ | $1-0.9 = 0.10$ |
-
-Observations:
-- Product AND gives the **lowest** value (multiplication shrinks things fast)
-- Lukasiewicz AND can hit **exactly zero** even when inputs are positive (if $A + B < 1$)
-- Godel AND is the **simplest** (just take the minimum) but is not fully smooth
-
----
-
-## ⚖️ Trade-offs & Comparisons
-
-### Boolean Logic vs Fuzzy Logic vs LNN
-
-| Aspect | Boolean Logic | Fuzzy Logic | LNN |
-|--------|-------------|-------------|-----|
-| **Truth values** | {0, 1} | [0, 1] | [0, 1] with bounds [L, U] |
-| **Operators** | Crisp AND/OR/NOT | min/max/complement | Differentiable t-norms |
-| **Learning** | No learning | Manual rule design | **Gradient-based weight learning** |
-| **Inference direction** | Forward OR backward | Forward only | **Bidirectional** (both) |
-| **Soundness** | Proven sound | No formal guarantees | **Proven logically sound** |
-| **Handles uncertainty?** | No | Partially (vagueness) | Yes (bounds quantify uncertainty) |
-| **Explainability** | Full (rules visible) | Partial | Full (structure = syntax tree) |
-| **Scalability** | Hard to write rules | Hard to write rules | Learns rules from data |
-| **Use case** | Theorem proving | Control systems | Neural-symbolic AI |
-
-### Why Not Just Use a Regular Neural Network?
-
-| Aspect | Regular Neural Net | LNN |
-|--------|-------------------|-----|
-| **Interpretability** | Black box | Every neuron has logical meaning |
-| **Structure** | Arbitrary architecture | Architecture follows logical formula |
-| **Knowledge** | Learned from data only | Can encode known rules + learn from data |
-| **Small data** | Needs lots of data | Works with rules + small data |
-| **Consistency** | May produce contradictions | Logical constraints prevent contradictions |
-| **Uncertainty** | Single probability output | Bounds [L,U] quantify confidence |
-
-### Product vs Lukasiewicz vs Godel T-Norms
-
-| Aspect | Product | Lukasiewicz | Godel (min/max) |
-|--------|---------|-------------|-----------------|
-| **Smoothness** | Fully smooth, good gradients | Piecewise linear, has kinks | Not differentiable at min/max points |
-| **AND behavior** | Multiplicative (shrinks fast with many inputs) | Additive penalties (can hit zero) | Takes minimum only |
-| **Gradient issues** | Can vanish with many small inputs | Flat regions where gradient = 0 | Gradient is 0 for non-minimum inputs |
-| **Exam default** | **YES** (used in all exam questions) | Used in LNN paper | Used in classical fuzzy logic |
-
----
-
-## 🏗️ Design Question Framework
-
-If the exam asks "Design an LNN-based system for [scenario]":
-
-### WHAT
-Define propositions and their meanings. Example:
-- P: "The road is wet" (truth value from rain sensor)
-- Q: "Visibility is low" (truth value from camera)
-- Conclusion: SlowDown $\leftarrow$ P $\vee$ Q
-
-### WHY LNN?
-- Inputs are uncertain/partial (sensor readings, not binary)
-- Need explainability (safety-critical application)
-- Want gradient-based learning to tune operator weights
-- Bounds [L,U] allow conservative decision-making
-
-### HOW
-1. Assign truth values or bounds to input propositions
-2. Choose a t-norm (Product-Sum for exam purposes)
-3. Build the syntax tree as a computation graph
-4. Run bidirectional message passing
-5. Read output bounds, apply threshold
-
-### TRADE-OFF
-- Product t-norm: smooth but shrinks fast with many inputs
-- Higher threshold $\alpha$ = more conservative (fewer false positives, more false negatives)
-- Lower threshold $\alpha$ = more aggressive (fewer false negatives, more false positives)
-- Bounds give safety guarantees but add computational cost
-
-### EXAMPLE
-Plug in specific numbers and compute step-by-step.
-
----
-
-## 📝 All Exam Questions with Full Model Answers
-
-### --- Sample Test S1 2025, Question 2 [2 marks] ---
-
-**(a)** What does HeatingOn $\leftarrow$ Cold $\otimes$ AtHome represent in natural language, and how is it different from a standard Boolean rule? **[1 mark]**
-
-**Model Answer:**
-
-This rule reads: "If it is cold and someone is at home, then turn on the heating system."
-
-In standard Boolean logic, this would require both inputs to be strictly True (1) to turn on the heating. In an LNN, the $\otimes$ operator allows soft conjunction over continuous truth values. It supports partial inputs (like 0.4 or 0.9), yielding an intermediate activation that reflects uncertainty and permits gradient-based learning.
-
-**(b)** Given Cold = 0.9, AtHome = 0.4, compute HeatingOn and discuss activation. **[1 mark]**
-
-**Model Answer:**
-
-Using soft-logic AND (Product-Sum), HeatingOn = Cold $\times$ AtHome = $0.9 \times 0.4 = 0.36$.
-
-Depending on the classification threshold, the system may or may not trigger the heating. If the threshold is low (e.g., 0.3), heating will be turned on. If it is high (e.g., 0.7), it may stay off.
-
----
-
-### --- Actual Mid-Semester Test S1 2025, Question 2 [3 marks] ---
-
-**(a)** P: $L_P = 0.8$, $U_P = 0.9$; Q: $L_Q = 0.3$, $U_Q = 0.6$. Alert $\leftarrow$ P $\vee$ Q. With $\alpha = 0.7$, is alert definitely true, definitely false, or uncertain? **[1 mark]**
-
-**Model Answer:**
-
-Lower Bound: $L_{\text{Alert}} = \max(L_P, L_Q) = \max(0.8, 0.3) = 0.8$
-
-Upper Bound: $U_{\text{Alert}} = \max(U_P, U_Q) = \max(0.9, 0.6) = 0.9$
-
-Since $\alpha = 0.7 < 0.8 = L_{\text{Alert}}$, both bounds are above the threshold.
-
-Classification: **A. Definitely true.**
-
-**(b)** Why are bounds beneficial in safety-critical applications? **[2 marks]**
-
-**Model Answer (any two for full marks):**
-
-1. **Expressing Uncertainty Explicitly**: Bounds represent how confident the system is in a truth value, unlike a single probability that hides uncertainty.
-
-2. **Supporting Conservative Decision-Making**: In autonomous driving, if the lower bound is below the threshold, the system can slow down or stop rather than take risky action based on overconfident estimates.
-
-3. **Robustness to Noisy/Incomplete Data**: Sensors may fail or provide noisy signals. Bounds propagate uncertainty from inputs to outputs, tracking how unreliable the final decision is.
-
-4. **Better Interpretability**: Engineers can inspect bounds to understand model certainty, improving debugging, transparency, and trust.
-
----
-
-### --- Sample Test S1 2026, Question 2 [4 marks] ---
-
-**(a)** What does HeatingOn $\leftarrow$ Cold $\otimes$ AtHome represent in natural language? How is it different from a standard Boolean rule? **[2 marks]**
-
-**Model Answer:**
-
-This rule reads: "If it is cold and someone is at home, then turn on the heating system." [1 mark]
-
-In standard Boolean logic, this would require both inputs to be strictly True (1) to turn on the heating. In an LNN, the $\otimes$ operator allows soft conjunction over continuous truth values. It supports partial inputs (like 0.4 or 0.9), yielding an intermediate activation that reflects uncertainty and permits gradient-based learning. [1 mark]
-
-**(b)** Given Cold = 0.9, AtHome = 0.4, compute HeatingOn. Would the system activate heating? **[2 marks]**
-
-**Model Answer:**
-
-Using soft-logic AND (e.g., Product-Sum), the output HeatingOn will reflect the multiplication of the two values: $0.9 \times 0.4 = 0.36$. [1 mark]
-
-Depending on the classification threshold, the system may or may not trigger the heating. If the threshold is low (e.g., 0.3), heating will be turned on. If it is high (e.g., 0.7), it may stay off. [1 mark]
-
----
-
-### --- Actual Mid-Semester Test S1 2025, Question 5 [3 marks] ---
-
-**(This tests fuzzy/soft logic, closely related to LNN)**
-
-**Question:** Consider the rule: IF STRONG AND HEAVY THEN HAMMER_THROWER. Contrast traditional logic vs fuzzy logic.
-
-**Model Answer:**
-
-With **classic logic**, both STRONG and HEAVY would be either True or False (by some criteria, like how much they can benchpress, or the athlete's weight in kg). If, and only if, both criteria are true, then the individual is judged suitable for hammer throwing; else, not.
-
-With **Fuzzy Logic**, membership functions map both STRONG and HEAVY to values in [0,1]. Some level of strength maps to $\mu_s$, and some bodyweight maps to $\mu_h$. The AND function might be implemented as $\min(\mu_s, \mu_h)$, or as the product $\mu_s \times \mu_h$. The THEN might have strength 1.0 or something less as a further multiplier. The final result is a suitability score anywhere in [0,1].
-
----
-
-## 🔄 OR Bounds Computation -- Deep Dive
-
-This is the most likely new question type for the 2026 actual test, since it appeared in the 2025 actual test. Here is a complete reference.
-
-### Computing OR Bounds
-
-For $C \leftarrow A \vee B$ with bounds $A = [L_A, U_A]$ and $B = [L_B, U_B]$:
-
-$$L_C = \max(L_A, L_B)$$
-$$U_C = \max(U_A, U_B)$$
-
-**Intuition:** OR only needs ONE input to be true. The lower bound of the OR output is at least as high as the highest lower bound of any input.
-
-### Computing AND Bounds
-
-For $C \leftarrow A \wedge B$ with bounds $A = [L_A, U_A]$ and $B = [L_B, U_B]$:
-
-$$L_C = \max(0, L_A + L_B - 1) \quad \text{(Lukasiewicz)}$$
-$$U_C = \min(U_A, U_B) \quad \text{(Godel)}$$
-
-**Intuition:** AND needs ALL inputs to be true. The upper bound of the AND output cannot exceed the smallest upper bound of any input.
-
-### Practice: Multiple OR-Bound Scenarios
-
-| Scenario | $L_A$ | $U_A$ | $L_B$ | $U_B$ | $\alpha$ | $L_{OR}$ | $U_{OR}$ | Classification |
-|----------|-------|-------|-------|-------|---------|----------|----------|---------------|
-| 1 | 0.8 | 0.9 | 0.3 | 0.6 | 0.7 | 0.8 | 0.9 | **TRUE** |
-| 2 | 0.4 | 0.6 | 0.3 | 0.5 | 0.5 | 0.4 | 0.6 | **UNCERTAIN** |
-| 3 | 0.1 | 0.3 | 0.2 | 0.4 | 0.5 | 0.2 | 0.4 | **FALSE** |
-| 4 | 0.9 | 1.0 | 0.9 | 1.0 | 0.5 | 0.9 | 1.0 | **TRUE** |
-
----
-
-## 🌐 English Expression Tips
-
-### Key Phrases for LNN Questions
-
-**Explaining what LNN is:**
-- "A Logic Neural Network is a neural-symbolic approach where the network structure mirrors a logical syntax tree, with each neuron representing a logical connective."
-- "LNN combines the interpretability of symbolic logic with the learning capability of neural networks."
-
-**Explaining the difference from Boolean:**
-- "Unlike Boolean logic, which requires inputs to be strictly 0 or 1, LNN operates over continuous truth values in the interval [0, 1]."
-- "The $\otimes$ operator is a differentiable soft conjunction that supports partial truth values, enabling gradient-based learning."
-
-**Explaining truth bounds:**
-- "Each proposition maintains a lower bound L and upper bound U, expressing the system's confidence interval for that proposition's truth value."
-- "Bounds allow the system to distinguish between 'probably true' and 'definitely true,' which is critical in safety-sensitive applications."
-
-**Explaining why bounds matter in safety-critical systems:**
-- "In autonomous driving, an overconfident single-point estimate could lead to dangerous decisions; bounds explicitly quantify the system's uncertainty."
-- "If the lower bound falls below the decision threshold, the system can choose a conservative action rather than risking an unsafe response."
-
-### Commonly Confused Terms
-
-| Pair | Clarification |
-|------|-------------|
-| LNN vs Fuzzy Logic | LNN has learnable weights, bidirectional inference, and soundness guarantees. Fuzzy logic is manually designed with no learning. |
-| T-norm vs activation function | T-norm generalizes AND to [0,1]; activation function (ReLU, sigmoid) is a general nonlinearity in standard neural nets. |
-| "Differentiable" vs "continuous" | Differentiable means we can compute gradients for backpropagation. Continuous just means no jumps. |
-| $\otimes$ vs $\times$ | $\otimes$ is the LNN conjunction operator (may include learned weights); $\times$ is plain multiplication. |
-| $\oplus$ vs $+$ | $\oplus$ is the LNN disjunction operator; $+$ is plain addition. |
-| Vagueness vs Uncertainty | Vagueness = blurry boundaries ("is 12C cold?"). Uncertainty = unknown truth ("will it rain?"). LNN handles both. |
-| Product t-norm vs Lukasiewicz | Product = $A \times B$; Lukasiewicz = $\max(0, A+B-1)$. They give different results! |
-
----
-
-## ✅ Self-Test Checklist
-
-### Computation Skills
-- [ ] Can I compute Product-Sum AND for any two values? (e.g., $0.9 \times 0.4 = 0.36$)
-- [ ] Can I compute Product-Sum OR for any two values? (e.g., $0.9 + 0.7 - 0.63 = 0.97$)
-- [ ] Can I compute nested operations? (e.g., $(C \wedge \text{SOB}) \vee F$)
-- [ ] Can I compute Lukasiewicz AND and OR? (e.g., $\max(0, 0.9+0.4-1) = 0.3$)
-- [ ] Can I compute OR bounds from two [L,U] pairs? (e.g., $\max(L_P, L_Q)$)
-- [ ] Can I classify truth bounds as TRUE/FALSE/UNCERTAIN given $\alpha$?
-
-### Conceptual Understanding
-- [ ] Can I explain in 2 sentences why LNN uses differentiable operators instead of Boolean AND?
-- [ ] Can I explain the difference between LNN and standard Boolean logic?
-- [ ] Can I explain why truth bounds [L,U] are useful in safety-critical applications? (Name at least 2 reasons)
-- [ ] Do I know the three-valued logic truth tables for AND and OR?
-- [ ] Can I explain upward pass vs downward pass?
-- [ ] Can I draw the LNN computation graph for a simple rule?
-- [ ] Do I understand the difference between LNN and fuzzy logic? (Name 3 differences)
-
-### Exam Readiness
-- [ ] Can I write a full answer for "interpret this LNN rule in natural language"?
-- [ ] Can I write a full answer for "compute HeatingOn = Cold $\otimes$ AtHome with values"?
-- [ ] Can I write a full answer for "compute OR bounds for autonomous vehicle alert"?
-- [ ] Can I write a full answer for "why are bounds useful in safety-critical systems"?
-- [ ] Have I memorized the Product-Sum formulas: AND = $A \times B$, OR = $A + B - AB$, NOT = $1 - A$?
-
----
-
-## 🎯 Exam Strategy -- Quick Reference Card
-
-### If the question asks "What does this LNN rule mean in natural language?":
-1. Translate the formula into an English sentence
-2. State that Boolean requires strictly True/False inputs
-3. State that LNN's $\otimes$ operator uses differentiable soft conjunction over [0,1]
-4. Mention that this enables gradient-based learning and handles uncertainty
-
-### If the question asks "Compute the truth value":
-1. Identify which t-norm to use (Product-Sum unless stated otherwise)
-2. Show the formula: AND = $A \times B$ or OR = $A + B - AB$
-3. Plug in numbers and compute step by step
-4. Discuss how the threshold determines the final decision
-
-### If the question asks about truth bounds:
-1. State the bounds for each input
-2. Compute the output bounds using the appropriate rule (max for OR, min for AND upper)
-3. Compare with threshold $\alpha$
-4. Classify as TRUE ($L \ge \alpha$), FALSE ($U \le \alpha$), or UNCERTAIN ($L < \alpha < U$)
-
-### If the question asks "Why are bounds useful in safety-critical applications?":
-Pick two from: (1) express uncertainty explicitly, (2) support conservative decisions, (3) robust to noisy sensors, (4) better interpretability for engineers
+## Self-Check
+
+Before you move on, make sure you can confidently do all of these:
+
+- [ ] Explain in one sentence what the \\(\otimes\\) operator does compared to Boolean AND
+- [ ] Compute a soft-AND result using *any* of the three t-norms
+- [ ] Compute OR using Product-Sum (\\(A + B - AB\\)) and explain how it differs from Godel max
+- [ ] Explain why LNN exists (the gap between classical logic and neural networks)
+- [ ] Describe how an LNN uses a syntax tree as its network architecture
+- [ ] Explain bidirectional message passing (upward pass vs downward pass)
+- [ ] Compute OR bounds given [L, U] for each input proposition
+- [ ] Compute AND bounds (Lukasiewicz) given [L, U] for each input proposition
+- [ ] Classify a result as definitely true / definitely false / uncertain given a threshold
+- [ ] Use the three-valued logic table to shortcut compound formula classification
+- [ ] Identify a contradiction case (L > U) and explain what it means
+- [ ] Apply the Łukasiewicz clamped formulas for AND and OR with more than two inputs
+- [ ] List at least two reasons why bounds help in safety-critical applications
+- [ ] Explain why truth values are not probabilities
+- [ ] State which t-norm is most commonly expected in exam questions (product)
+- [ ] Write a 1-mark, 2-mark, or 3-mark answer in the correct length and structure

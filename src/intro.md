@@ -1,50 +1,50 @@
-# COMPSCI 713 — AI Fundamentals: Exam Preparation
+# COMPSCI 713 Mid-Term Study Guide
 
-**University of Auckland | Semester 1, 2026 | Instructor: Xinyu Zhang**
+This mdBook is an exam-focused study guide for the **COMPSCI 713: AI Fundamentals** mid-semester test, based on lecture slides (Weeks 2–6), sample tests, and actual past papers with official answer keys.
 
----
+## Test Format
 
-## About This Book
-
-This knowledge base is built to help you **learn and prepare** for the COMPSCI 713 in-course test (Week 7, 60 minutes, 20 marks).
-
-Every concept is explained using the **Feynman method**: first in plain language with analogies, then formally with math, then applied to real exam questions. The goal is not just memorisation — it's **understanding**.
+| Item | Detail |
+|---|---|
+| Duration | 60 minutes (5 min reading + 55 min answering) |
+| Total Marks | 15–20 marks |
+| Questions | 6 short-answer questions, attempt ALL |
+| Allowed Materials | Double-sided page of **handwritten** notes |
+| Not Allowed | Digital devices, calculators, phones |
+| Key Instruction | **Quality over quantity** — be concise and clear |
 
 ## How to Use This Book
 
-1. **Start with Part 0** — read the exam analysis to understand what's tested and with what weight
-2. **Work through modules in priority order** — 🔴 modules first (A, B, G, F), then 🟠 (D, H), then 🟡 (C, E)
-3. **For each chapter**: read the Feynman Draft first to build intuition, then study the formal definitions, then try the practice problems
-4. **Use the English Expression Guide** before the test — practise the sentence templates
-5. **Attempt all 3 mock exams** under timed conditions (55 min answering)
-6. **Check your cheat sheet** — the frequency map chapter has recommendations for what to write on your handwritten A4 page
+1. Start with the [Exam Analysis](./chapters/00_exam_analysis.md) to understand the test pattern
+2. Study each topic chapter in priority order (🔴 → 🟠 → 🟡)
+3. For each chapter, read the **Feynman Draft** first to build intuition
+4. Study the [真题题库](./chapters/real_exam_bank.md) — all real past paper questions organized by topic, with detailed answer analysis
+5. Use the **Common Mistakes** section in each chapter to avoid losing easy marks
+6. Work through the [预测题库](./chapters/predicted_question_bank.md) — predicted surprise questions based on lecture content never tested before
+7. Use the [Cheat Sheet](./chapters/cheatsheet.md) to prepare your handwritten notes page
 
-## Exam Format (Sample Test S1 2026)
+## Priority Map
 
-| Item | Detail |
-|------|--------|
-| Duration | 60 min (5 min reading + 55 min answering) |
-| Total marks | 20 |
-| Questions | 6 short-answer questions |
-| Notes allowed | Double-sided handwritten A4 page |
-| Calculators | Not permitted |
-| Style | **Quality over quantity** — concise, clear answers |
+| Priority | Topic | Marks per Test |
+|---|---|---|
+| 🔴 必考 | Symbolic Logic (Propositional + FOL) | 2–5 marks |
+| 🔴 必考 | Logic Neural Networks (LNN) | 2–4 marks |
+| 🔴 必考 | Knowledge Graphs / TransE | 2 marks |
+| 🔴 必考 | Decision Trees / CART / Random Forest | 2–3 marks |
+| 🔴 必考 | Vagueness vs Uncertainty | 3–4 marks |
+| 🟠 高频 | Multi-agent Systems (Robot Soccer) | 2 marks |
+| 🟠 高频 | Fuzzy Logic vs Traditional Logic | 2–3 marks |
+| 🟡 中频 | MYCIN / Forward & Backward Chaining | 3 marks |
+| 🟡 中频 | Genetic Algorithms / NEAT | 3 marks |
 
-## Coverage Map (Weeks 2-5)
+## Scope and Limits
 
-| Week | Lecture | Topic | Module |
-|------|---------|-------|--------|
-| W2 | L1 | Symbolic Logic (Propositional + FOL) | **A** 🔴 |
-| W2 | L2 | Logic Neural Networks (LNN) | **B** 🔴 |
-| W3 | L1 | Knowledge Representation (Expert Systems, Ontologies, KG) | **C** 🟡 |
-| W3 | L2 | Knowledge Graphs for AI (TransE, Embeddings, RAG) | **D** 🟠 |
-| W4 | L1 | MYCIN Expert System (Confidence Factors) | **E** 🟡 |
-| W4 | L2 | Decision Trees & Ensembles (Bagging, Boosting) | **F** 🔴 |
-| W5 | L1 | Soft Computing (Fuzzy Logic, Bayesian, Vagueness vs Uncertainty) | **G** 🔴 |
-| — | — | Multi-Agent Systems (Robot Soccer) | **H** 🟠 |
+This guide helps you prioritise revision based on analysis of 4 past test papers. It does not predict exact questions. The teacher may introduce new question styles or cover topics in different combinations. Do not skip any topic — even "lower priority" topics may appear.
 
-## Priority Legend
+## Weeks Covered
 
-- 🔴 **必考 (Must-Know)**: Appeared in sample test with high mark weight
-- 🟠 **高频 (High Frequency)**: Appeared in sample test with moderate weight
-- 🟡 **中频 (Medium)**: Full lecture topic, not in sample but likely in actual test
+- **Week 2**: Symbolic Logic (Lecture 3) + Logic Neural Networks (Lecture 4)
+- **Week 3**: Knowledge Representation (Lecture 5) + Knowledge Graphs for AI (Lecture 6)
+- **Week 4**: MYCIN Expert System (Lecture 7) + Decision Trees & Ensemble (Lecture 8)
+- **Week 5**: Soft Computing — Fuzzy Logic & Naive Bayes (Lecture 9)
+- **Week 6**: Multi-Agent / Robots (Lecture 10) + NEAT (Lecture 11)
